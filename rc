@@ -1,4 +1,8 @@
 VNVDIR="/home/reuel/Plocha/Python/expansion_wars/venv"
+PRJDIR="/home/reuel/Plocha/Python/expansion_wars/prj"
 a() {
     source $VNVDIR/bin/activate
+}
+mng() {
+    $PRJDIR/manage.py "$@"
 }
