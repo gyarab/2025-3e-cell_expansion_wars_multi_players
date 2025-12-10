@@ -1,0 +1,4 @@
+VNVDIR="/home/reuel/Plocha/Python/expansion_wars/venv"
+a() {
+    source $VNVDIR/bin/activate
+}
