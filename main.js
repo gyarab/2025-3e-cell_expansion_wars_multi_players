@@ -5,10 +5,10 @@ let selectedCell = null;
 let lastMouse = { x: 0, y: 0 };
 let activeSoldiers = [];
 let snapTarget = null;
-let autoSendInterval = null;
-let activeLinks = [];
+let activeLinks = []; // each link: { from, to, interval }
+let snapRadius = 80; // larger snap area for touchpad responsiveness
 
-// ------------------- CELL CLASS -------------------
+
 class Cell {
     constructor(x, y, radius, color, owner) {
         this.x = x;
@@ -35,18 +35,43 @@ class Cell {
 }
 
 // ------------------- HELPER FUNCTIONS -------------------
-function findClosestCell(x, y) {
+function findClosestCell(x, y, expandedRadius = false) {
+    let closest = null;
+    let closestDist = Infinity;
+    const radiusFactor = expandedRadius ? snapRadius : null;
+
     for (let c of cells) {
         const dist = Math.hypot(x - c.x, y - c.y);
-        if (dist < c.radius) return c;
+        const detectionRadius = expandedRadius ? radiusFactor : c.radius;
+        if (dist < detectionRadius && dist < closestDist) {
+            closest = c;
+            closestDist = dist;
+        }
     }
-    return null;
+    return closest;
+}
+
+// Return true if point (x,y) is within `threshold` pixels of the segment from `a` to `b`
+function isPointNearLine(x, y, a, b, threshold = 6) {
+    const vx = b.x - a.x;
+    const vy = b.y - a.y;
+    const wx = x - a.x;
+    const wy = y - a.y;
+    const c1 = vx * wx + vy * wy;
+    const c2 = vx * vx + vy * vy;
+    let t = 0;
+    if (c2 !== 0) t = c1 / c2;
+    t = Math.max(0, Math.min(1, t));
+    const px = a.x + t * vx;
+    const py = a.y + t * vy;
+    const dist = Math.hypot(x - px, y - py);
+    return dist <= threshold;
 }
 
 function sendSoldiers(from, to) {
+    // Allow sending even with low soldiers - as long as > 0
     if (from.soldiers <= 0) {
-        stopAutoSend();
-        return;
+        return; // silently skip this frame if no soldiers
     }
 
     from.soldiers -= 1;
@@ -61,22 +86,25 @@ function sendSoldiers(from, to) {
 }
 
 function startAutoSend(from, to) {
-    stopAutoSend();
-    activeLinks.push({ from, to });
-    autoSendInterval = setInterval(() => sendSoldiers(from, to), 1000);
+    if (activeLinks.some(link => link.from === from && link.to === to)) return;
+    const interval = setInterval(() => sendSoldiers(from, to), 500); // faster: 500ms instead of 1000ms
+    activeLinks.push({ from, to, interval });
 }
 
-function stopAutoSend() {
-    if (autoSendInterval) {
-        clearInterval(autoSendInterval);
-        autoSendInterval = null;
-    }
+function stopAutoSendToTarget(target) {
+    activeLinks = activeLinks.filter(link => {
+        if (link.to === target) {
+            clearInterval(link.interval);
+            return false;
+        }
+        return true;
+    });
 }
 
 // ------------------- CELLS -------------------
 let cells = [
     new Cell(200, 350, 45, "blue", 1),   // Player 1
-    new Cell(800, 200, 45, "red", 2),    // Player 2
+    new Cell(700, 200, 45, "red", 2),    // Player 2
     new Cell(500, 500, 45, "green", 3),  // Player 3
 ];
 
@@ -87,25 +115,71 @@ canvas.addEventListener("mousemove", (e) => {
     lastMouse.y = e.clientY - rect.top;
 
     if (selectedCell) {
-        const snapped = findClosestCell(lastMouse.x, lastMouse.y);
+        const snapped = findClosestCell(lastMouse.x, lastMouse.y, true);
         if (snapped && snapped !== selectedCell) snapTarget = snapped;
         else snapTarget = null;
     }
-});
+}, { passive: true });
 
-canvas.addEventListener("click", () => {
+// pointerdown for better touch/touchpad support (uses expanded radius)
+canvas.addEventListener('pointerdown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // If user clicked near an active link, toggle that link off
+    const clickedLink = activeLinks.find(link => isPointNearLine(x, y, link.from, link.to, 8));
+    if (clickedLink) {
+        clearInterval(clickedLink.interval);
+        activeLinks = activeLinks.filter(l => l !== clickedLink);
+        return;
+    }
+
     if (selectedCell && snapTarget) {
-        startAutoSend(selectedCell, snapTarget);
-        selectedCell = null;
+        // toggle: if link exists, stop it; otherwise start it
+        const existing = activeLinks.find(l => l.from === selectedCell && l.to === snapTarget);
+        if (existing) {
+            clearInterval(existing.interval);
+            activeLinks = activeLinks.filter(l => !(l.from === selectedCell && l.to === snapTarget));
+        } else {
+            startAutoSend(selectedCell, snapTarget);
+        }
         snapTarget = null;
         return;
     }
 
-    stopAutoSend();
+    const c = findClosestCell(x, y, true);
+    if (c && c.owner > 0) {
+        selectedCell = selectedCell === c ? null : c;
+    }
+}, { passive: true });
 
-    const c = findClosestCell(lastMouse.x, lastMouse.y);
-    if (c && c.owner > 0) { // any owned cell
-        selectedCell = c;
+canvas.addEventListener("click", () => {
+    // If user clicked near an active link, toggle it off
+    const clickedLink = activeLinks.find(link => isPointNearLine(lastMouse.x, lastMouse.y, link.from, link.to, 8));
+    if (clickedLink) {
+        clearInterval(clickedLink.interval);
+        activeLinks = activeLinks.filter(l => l !== clickedLink);
+        return;
+    }
+
+    if (selectedCell && snapTarget) {
+        // toggle on click: stop existing link if present, otherwise start
+        const existing = activeLinks.find(l => l.from === selectedCell && l.to === snapTarget);
+        if (existing) {
+            clearInterval(existing.interval);
+            activeLinks = activeLinks.filter(l => !(l.from === selectedCell && l.to === snapTarget));
+        } else {
+            startAutoSend(selectedCell, snapTarget);
+        }
+        snapTarget = null;
+        return;
+    }
+
+    // Use expanded detection radius for clicks so the whole cell area is clickable
+    const c = findClosestCell(lastMouse.x, lastMouse.y, true);
+    if (c && c.owner > 0) {
+        selectedCell = selectedCell === c ? null : c;
     }
 });
 
@@ -134,17 +208,16 @@ function updateSoldiers() {
                     s.target.soldiers = 5;
                     s.target.underAttack = false;
 
-                    // Remove the line and stop auto-sending
-                    activeLinks = activeLinks.filter(link => link.to !== s.target);
-                    stopAutoSend();
+                    // Remove lines and stop auto-sending to this target only
+                    stopAutoSendToTarget(s.target);
                 }
             }
             activeSoldiers.splice(activeSoldiers.indexOf(s), 1);
             continue;
         }
 
-        s.x += dx / dist * 3;
-        s.y += dy / dist * 3;
+        s.x += dx / dist * 4;
+        s.y += dy / dist * 4;
 
         ctx.beginPath();
         ctx.arc(s.x, s.y, 5, 0, Math.PI * 2);
