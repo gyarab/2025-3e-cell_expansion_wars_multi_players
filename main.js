@@ -8,6 +8,11 @@ let snapTarget = null;
 let activeLinks = []; // each link: { from, to, interval }
 let snapRadius = 80; // larger snap area for touchpad responsiveness
 
+// Game state
+let gameOver = false;
+let gameResult = null; // "win" | "lose"
+let gamePaused = false; // when true, AI and refill pause, drawing continues
+
 
 class Cell {
     constructor(x, y, radius, color, owner) {
@@ -15,7 +20,7 @@ class Cell {
         this.y = y;
         this.radius = radius;
         this.color = color;
-        this.owner = owner; // 1=blue, 2=red, 3=green
+        this.owner = owner; // owners: 0=neutral, 1=player, 2=computer
         this.soldiers = 20;
         this.maxSoldiers = 30;
         this.underAttack = false;
@@ -27,7 +32,8 @@ class Cell {
         ctx.fillStyle = this.color;
         ctx.fill();
 
-        ctx.fillStyle = "white";
+        // Draw soldier count with readable contrast on white cells
+        ctx.fillStyle = this.color === "white" ? "black" : "white";
         ctx.font = "16px Arial";
         ctx.textAlign = "center";
         ctx.fillText(this.soldiers, this.x, this.y + 5);
@@ -87,9 +93,11 @@ function sendSoldiers(from, to) {
 
 function startAutoSend(from, to) {
     if (activeLinks.some(link => link.from === from && link.to === to)) return;
-    const interval = setInterval(() => sendSoldiers(from, to), 500); // faster: 500ms instead of 1000ms
+    const interval = setInterval(() => {
+        if (!gameOver && !gamePaused) sendSoldiers(from, to);
+    }, 500); // faster: 500ms instead of 1000ms
     activeLinks.push({ from, to, interval });
-}
+} 
 
 function stopAutoSendToTarget(target) {
     activeLinks = activeLinks.filter(link => {
@@ -103,10 +111,22 @@ function stopAutoSendToTarget(target) {
 
 // ------------------- CELLS -------------------
 let cells = [
-    new Cell(200, 350, 45, "blue", 1),   // Player 1
-    new Cell(700, 200, 45, "red", 2),    // Player 2
-    new Cell(500, 500, 45, "green", 3),  // Player 3
+    // Player cell (WHITE)
+    new Cell(300, 400, 45, "white", 1),
+
+    // Enemy cell (BLACK)
+    new Cell(700, 300, 45, "black", 2),
+
+    // Neutral cells (BLUE)
+    new Cell(500, 550, 45, "blue", 0),
+    new Cell(900, 500, 45, "blue", 0),
 ];
+
+// Set starting soldiers explicitly
+cells[0].soldiers = 30; // player
+cells[1].soldiers = 60; // enemy
+cells[2].soldiers = 20;
+cells[3].soldiers = 20;
 
 // ------------------- MOUSE EVENTS -------------------
 canvas.addEventListener("mousemove", (e) => {
@@ -149,7 +169,16 @@ canvas.addEventListener('pointerdown', (e) => {
     }
 
     const c = findClosestCell(x, y, true);
-    if (c && c.owner > 0) {
+
+    if (!c) {
+        // clicked empty space → cancel selection and line
+        selectedCell = null;
+        snapTarget = null;
+        return;
+    }
+
+    // allow selecting ONLY player cell
+    if (c.owner === 1) {
         selectedCell = selectedCell === c ? null : c;
     }
 }, { passive: true });
@@ -178,7 +207,16 @@ canvas.addEventListener("click", () => {
 
     // Use expanded detection radius for clicks so the whole cell area is clickable
     const c = findClosestCell(lastMouse.x, lastMouse.y, true);
-    if (c && c.owner > 0) {
+
+    if (!c) {
+        // clicked empty space → cancel selection and line
+        selectedCell = null;
+        snapTarget = null;
+        return;
+    }
+
+    // allow selecting ONLY player cell
+    if (c.owner === 1) {
         selectedCell = selectedCell === c ? null : c;
     }
 });
@@ -201,15 +239,24 @@ function updateSoldiers() {
                 if (s.target.soldiers <= 0) {
                     // Capture the cell
                     s.target.owner = s.owner;
-                    if (s.target.owner === 1) s.target.color = "blue";
-                    else if (s.target.owner === 2) s.target.color = "red";
-                    else if (s.target.owner === 3) s.target.color = "green";
+                    if (s.target.owner === 1) s.target.color = "white";
+                    else if (s.target.owner === 2) s.target.color = "black";
+                    else s.target.color = "blue";
 
                     s.target.soldiers = 5;
                     s.target.underAttack = false;
 
-                    // Remove lines and stop auto-sending to this target only
-                    stopAutoSendToTarget(s.target);
+                    // ----------------------------
+                    // DETACH LINES CONNECTED TO THIS CELL
+                    // remove links where this cell is the source or the target
+                    activeLinks = activeLinks.filter(link => {
+                        if (link.from === s.target || link.to === s.target) {
+                            clearInterval(link.interval);
+                            return false;
+                        }
+                        return true;
+                    });
+                    // ----------------------------
                 }
             }
             activeSoldiers.splice(activeSoldiers.indexOf(s), 1);
@@ -221,19 +268,88 @@ function updateSoldiers() {
 
         ctx.beginPath();
         ctx.arc(s.x, s.y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = s.owner === 1 ? "lightblue" : s.owner === 2 ? "orange" : "lightgreen";
+        ctx.fillStyle = s.owner === 1 ? "white" : s.owner === 2 ? "orange" : "lightblue";
         ctx.fill();
     }
 }
 
-// ------------------- CELL REFILL -------------------
+// ------------------- CELL REFILL (WITH RECOVERY FROM ZERO) -------------------
 setInterval(() => {
+    if (gamePaused || gameOver) return;
+
     for (let c of cells) {
         if (!c.underAttack && c.soldiers < c.maxSoldiers) {
-            c.soldiers += 1;
+            c.soldiers += 1; // slow regeneration
         }
+
+        // reset underAttack flag every tick
+        c.underAttack = false;
     }
-}, 500);
+}, 800); // slower = more strategic
+
+// ------------------- COMPUTER AI (MULTI-CELL) -------------------
+setInterval(() => {
+    if (gamePaused || gameOver) return;
+
+    // all black cells with enough soldiers will attack
+    const enemies = cells.filter(c => c.owner === 2 && c.soldiers > 5);
+    const targets = cells.filter(c => c.owner !== 2);
+    if (targets.length === 0 || enemies.length === 0) return;
+
+    for (let enemy of enemies) {
+        const target = targets[Math.floor(Math.random() * targets.length)];
+        sendSoldiers(enemy, target);
+    }
+}, 800);
+
+// ------------------- GAME END CHECKS -------------------
+function checkGameEnd() {
+    if (gameOver) return;
+
+    const allWhite = cells.every(c => c.owner === 1);
+    const allBlack = cells.every(c => c.owner === 2);
+
+    if (allWhite) {
+        gameOver = true;
+        gameResult = "win";
+        showEndOverlay("YOU WIN", "All cells are yours!");
+    }
+
+    if (allBlack) {
+        gameOver = true;
+        gameResult = "lose";
+        showEndOverlay("YOU LOSE", "The enemy took over everything.");
+    }
+}
+
+function showEndOverlay(title, text) {
+    const overlay = document.getElementById("endOverlay");
+    const titleEl = document.getElementById("endTitle");
+    const textEl = document.getElementById("endText");
+
+    if (!overlay || !titleEl || !textEl) return;
+
+    titleEl.textContent = title;
+    textEl.textContent = text;
+
+    overlay.classList.remove("hidden");
+}
+
+// Rules overlay controls
+const rulesButton = document.getElementById("rulesButton");
+const rulesOverlay = document.getElementById("rulesOverlay");
+
+if (rulesButton && rulesOverlay) {
+    rulesButton.addEventListener("click", () => {
+        rulesOverlay.classList.remove("hidden");
+        gamePaused = true; // freeze game while rules are open
+    });
+} 
+
+function closeRules() {
+    if (rulesOverlay) rulesOverlay.classList.add("hidden");
+    gamePaused = false; // resume game on close
+} 
 
 // ------------------- DRAW LOOP -------------------
 function draw() {
@@ -262,7 +378,10 @@ function draw() {
 
     for (let c of cells) c.draw();
 
-    updateSoldiers();
+    if (!gameOver && !gamePaused) {
+        updateSoldiers();
+        checkGameEnd();
+    }
 
     requestAnimationFrame(draw);
 }

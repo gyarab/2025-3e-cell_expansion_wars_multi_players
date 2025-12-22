@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Cell Wars – Level 1</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="gameCanvas" width="1000" height="750"></canvas>
+
+    <!-- Game end overlay (hidden by default) -->
+    <div id="endOverlay" class="hidden">
+        <div class="endBox">
+            <h1 id="endTitle"></h1>
+            <p id="endText"></p>
+            <button onclick="location.href='index.html'">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Rules Button -->
+    <button id="rulesButton">Pravidla</button>
+
+    <!-- Rules Overlay -->
+    <div id="rulesOverlay" class="hidden">
+        <div class="rulesBox">
+            <h2>Pravidla hry</h2>
+            <ul>
+                <li>Bílá buňka je vaše a můžete ji ovládat.</li>
+                <li>Černá buňka je nepřítel a útočí na ostatní buňky automaticky.</li>
+                <li>Modré buňky jsou neutrální a můžete je dobýt.</li>
+                <li>Buňky mohou postupně obnovovat vojáky, pokud nejsou napadeny.</li>
+                <li>Cílem je převzít všechny buňky (vítězství) nebo zabránit nepříteli převzít vaše (prohra).</li>
+            </ul>
+            <button onclick="closeRules()">Zavřít</button>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>

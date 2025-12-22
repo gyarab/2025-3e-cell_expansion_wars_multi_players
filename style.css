@@ -1,10 +1,274 @@
-body {
+/* -------- GLOBAL RESET -------- */
+* {
     margin: 0;
-    overflow: hidden;
-    background: #111;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-canvas {
+html, body {
+    width: 100%;
+    height: 100%;
+    background: #111;
+    overflow-x: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 🌟 Page scrolling behavior (smooth) */
+html {
+    scroll-behavior: smooth;
+}
+
+/* -------- SCROLL SECTIONS -------- */
+section {
+    width: 100%;
+    min-height: 100vh;
+    background: #111; /* SAME BLACK EVERYWHERE */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 🏆 Hero Section */
+.hero-section {
+    background: #111;
+    color: white;
+    text-align: center;
+}
+
+.title {
+    font-size: 64px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.intro-text {
+    font-size: 24px;
+    color: #ddd;
+    max-width: 720px;
+    text-align: center;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+/* 👇 Scroll Down arrow */
+.scroll-down {
+    margin-top: 50px;
+    font-size: 32px;
+    color: white;
+    text-decoration: none;
+    animation: bounce 2s infinite;
+}
+
+/* Basic bouncing animation */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* 🕹 Levels Section */
+.levels-section {
+    color: white;
+}
+
+.levels-section h2 {
+    font-size: 32px;
+    color: white;
+    margin-bottom: 30px;
+}
+
+.level-buttons button {
+    padding: 20px 40px;
+    font-size: 20px;
+    border-radius: 40px;
+    border: none;
+    cursor: pointer;
+    background: white;
+    color: #000000;
+    transition: 0.2s ease;
+}
+
+.level-buttons button:hover:not(:disabled) {
+    background: #4285f4; /* Google blue */
+    color: white;
+}
+
+.level-buttons button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* -------- MULTIPLAYER BUTTON -------- */
+.multiplayer-button {
+    margin-top: 110px; /* ≈ 3 cm */
+    display: flex;
+    justify-content: center;
+}
+
+.multiplayer-button button {
+    padding: 20px 40px;
+    font-size: 20px;
+    border-radius: 40px;
+    border: none;
+    background: white;
+    color: #111;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.multiplayer-button button:hover:not(:disabled) {
+    background: #34a853; /* Google green accent */
+    color: white;
+}
+
+.multiplayer-button button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* -------- MULTIPLAYER PULSE + GLOW -------- */
+.multiplayer-button button:not(:disabled) {
+    animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(52, 168, 83, 0.0);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 25px rgba(52, 168, 83, 0.6);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(52, 168, 83, 0.0);
+    }
+}
+
+/* -------- GAME END OVERLAY -------- */
+#endOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+#endOverlay.hidden {
+    display: none;
+}
+
+.endBox {
+    background: #111;
+    border-radius: 16px;
+    padding: 40px 60px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+/* WIN / LOSE styles */
+.endBox h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.endBox p {
+    font-size: 20px;
+    margin-bottom: 30px;
+    color: #ccc;
+}
+
+.endBox button {
+    padding: 14px 30px;
+    font-size: 18px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    background: white;
+    color: #111;
+}
+
+.endBox button:hover {
+    background: #4285f4;
+    color: white;
+}
+
+/* -------- RULES BUTTON -------- */
+#rulesButton {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 30px;
+    border: none;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+    z-index: 1000;
+    transition: 0.2s ease;
+}
+
+#rulesButton:hover {
+    background: #4285f4;
+    color: white;
+}
+
+/* -------- RULES OVERLAY -------- */
+#rulesOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+}
+
+#rulesOverlay.hidden {
+    display: none;
+}
+
+.rulesBox {
+    background: #111;
+    color: white;
+    border-radius: 16px;
+    padding: 40px 60px;
+    max-width: 600px;
+    text-align: left;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+.rulesBox h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.rulesBox ul {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.rulesBox button {
     display: block;
-    margin: auto;
+    margin: 0 auto;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 30px;
+    border: none;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+}
+
+.rulesBox button:hover {
+    background: #4285f4;
+    color: white;
 }

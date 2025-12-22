@@ -3,11 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cell Territory Game</title>
+    <title>Brain Cell Wars</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <canvas id="gameCanvas" width="1000" height="750"></canvas>
-    <script src="main.js"></script>
+<body class="menu">
+
+    <!-- 🌟 Section 1: Hero / Title -->
+    <section class="hero-section" id="hero">
+        <h1 class="title">Brain Cell Wars</h1>
+        <p class="intro-text">
+            Čau lidi! Vítejte ve hře Brain Cell Wars, kde budete bránit své mozkové buňky před invazí škodlivých virů a bakterií.
+        </p>
+        <a href="#levels" class="scroll-down">&#8595; Scroll Down</a>
+    </section>
+
+    <!-- 🎮 Section 2: Level Buttons -->
+    <section class="levels-section" id="levels">
+        <h2>Můžete zkusit náš level:</h2>
+
+        <div class="level-buttons">
+            <button onclick="location.href='game.html'">LEVEL 1</button>
+            <button disabled>LEVEL 2</button>
+            <button disabled>LEVEL 3</button>
+        </div>
+
+        <!-- Multiplayer button -->
+        <div class="multiplayer-button">
+            <button disabled>MULTIPLAYER (COMING SOON)</button>
+        </div>
+    </section> 
+
 </body>
 </html>
