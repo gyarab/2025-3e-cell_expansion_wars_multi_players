@@ -8,6 +8,21 @@
 </head>
 <body class="menu">
 
+<div id="loginBox">
+    <div id="loginForm">
+        <input type="text" id="username" placeholder="Name">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <button onclick="register()">Register</button>
+        <p id="loginMessage"></p>
+    </div>
+
+    <div id="userPanel" class="hidden">
+        <span id="welcomeText"></span>
+        <button onclick="logout()">Logout</button>
+    </div>
+</div>
+
     <!-- 🌟 Section 1: Hero / Title -->
     <section class="hero-section" id="hero">
         <h1 class="title">Brain Cell Wars</h1>
@@ -22,7 +37,7 @@
         <h2>Můžete zkusit náš level:</h2>
 
         <div class="level-buttons">
-            <button onclick="location.href='game.html'">LEVEL 1</button>
+            <button id="level1Btn" class="level-button" onclick="location.href='game.html'">LEVEL 1</button>
             <button disabled>LEVEL 2</button>
             <button disabled>LEVEL 3</button>
         </div>
@@ -32,6 +47,80 @@
             <button disabled>MULTIPLAYER (COMING SOON)</button>
         </div>
     </section> 
+
+<script src="login.js"></script>
+
+<button id="achievementsBtn" class="level-button achievements-btn">🏆 ACHIEVEMENTS</button>
+
+<div id="achievementsPopup" class="notification hidden">
+    <h2>Úspěchy</h2>
+    <div id="achievementsList"></div>
+    <button id="achCloseBtn">Zavřít</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.hasWon && hasWon(1)) {
+        const b = document.getElementById('level1Btn');
+        if (b) b.classList.add('completed');
+    }
+
+    const achievementsBtn = document.getElementById("achievementsBtn");
+    const achievementsPopup = document.getElementById("achievementsPopup");
+    const achievementsList = document.getElementById("achievementsList");
+    const achCloseBtn = document.getElementById("achCloseBtn");
+
+    function renderAchievements() {
+        if (!achievementsList) return;
+        achievementsList.innerHTML = "";
+
+        const achievements = [
+            { level: 1, icon: "🥉", title: "Rookie", desc: "Level 1 dokončen" },
+            { level: 2, icon: "🥈", title: "All-Star", desc: "Level 2 dokončen" },
+            { level: 3, icon: "🥇", title: "Legend", desc: "Level 3 dokončen" }
+        ];
+
+        achievements.forEach(a => {
+            const row = document.createElement("div");
+
+            if (hasWon(a.level)) {
+                row.textContent = `${a.icon} ${a.title} — ${a.desc}`;
+                row.style.color = "gold";
+            } else {
+                row.textContent = `🔒 ${a.title} — ${a.desc}`;
+                row.style.color = "#666";
+            }
+
+            row.style.fontSize = "18px";
+            row.style.margin = "12px 0";
+
+            achievementsList.appendChild(row);
+        });
+    }
+
+    if (achievementsBtn) {
+        achievementsBtn.addEventListener("click", () => {
+            window.gamePaused = true;
+            if (achievementsPopup) achievementsPopup.classList.remove("hidden");
+            renderAchievements();
+        });
+    }
+
+    if (achCloseBtn) {
+        achCloseBtn.addEventListener("click", () => {
+            if (achievementsPopup) achievementsPopup.classList.add("hidden");
+            window.gamePaused = false;
+        });
+    }
+
+    // expose renderer/close to global in case other code calls them
+    window.renderAchievements = renderAchievements;
+    window.closeAchievements = () => {
+        if (achievementsPopup) achievementsPopup.classList.add("hidden");
+        window.gamePaused = false;
+    };
+});
+</script>
 
 </body>
 </html>

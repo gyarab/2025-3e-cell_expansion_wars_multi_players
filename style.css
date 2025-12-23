@@ -272,3 +272,164 @@ section {
     background: #4285f4;
     color: white;
 }
+
+/* -------- LOGIN BOX -------- */
+#loginBox {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #000;
+    border: 1px solid #333;
+    padding: 16px;
+    border-radius: 16px; /* 🔵 rounded */
+    width: 220px;
+    font-family: Arial, sans-serif;
+    color: white;
+    box-shadow: 0 0 20px rgba(255,255,255,0.05);
+}
+
+#loginBox input {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 6px;
+    background: #111;
+    border: 1px solid #333;
+    color: white;
+}
+
+#loginBox button {
+    width: 100%;
+    margin-top: 5px;
+    padding: 6px;
+    background: white;
+    color: black;
+    border: none;
+    cursor: pointer;
+}
+
+#loginBox input,
+#loginBox button {
+    border-radius: 8px;
+}
+
+#loginBox button:hover {
+    background: #ddd;
+}
+
+#loginMessage {
+    font-size: 12px;
+    color: #f55;
+    margin-top: 6px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* -------- ACHIEVEMENTS / LEVEL HIGHLIGHT -------- */
+.level-button.completed {
+    background: linear-gradient(45deg, gold, #ffd700);
+    color: black;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+.achievements {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+}
+
+.achievements-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+
+    width: 260px;          /* bigger */
+    height: 80px;          /* bigger */
+    font-size: 20px;
+
+    border-radius: 30px;
+    background: #111;
+    color: white;
+
+    box-shadow: 0 0 20px rgba(255,255,255,0.08);
+}
+
+.notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #111;
+    border: 2px solid #444;
+    border-radius: 16px;
+    padding: 20px 30px;
+    color: white;
+    z-index: 9999;
+    min-width: 300px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+.notification button {
+    margin-top: 15px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    background: white;
+    color: black;
+    border: none;
+    cursor: pointer;
+}
+
+.notification button:hover {
+    background: #ddd;
+}
+
+/* overlay + content (simple reuse of rules styling) */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+}
+
+.overlayContent {
+    background: #111;
+    color: white;
+    border-radius: 16px;
+    padding: 40px 60px;
+    max-width: 600px;
+    text-align: left;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+/* -------- WIN POPUP + FLAKES -------- */
+.popup {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 9999;
+}
+
+.popup.hidden {
+    display: none;
+}
+
+/* center and style popup button */
+.popup button {
+    padding: 12px 24px;
+    font-size: 18px;
+    border-radius: 12px;
+    background: white;
+    color: black;
+    border: none;
+    cursor: pointer;
+}

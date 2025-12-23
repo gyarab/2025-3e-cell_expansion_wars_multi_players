@@ -12,6 +12,47 @@ let snapRadius = 80; // larger snap area for touchpad responsiveness
 let gameOver = false;
 let gameResult = null; // "win" | "lose"
 let gamePaused = false; // when true, AI and refill pause, drawing continues
+let gameWon = false;
+
+// golden flakes
+let flakes = [];
+
+function spawnFlake() {
+    flakes.push({
+        x: Math.random() * canvas.width,
+        y: -10,
+        speed: 1 + Math.random() * 3,
+        size: 3 + Math.random() * 4
+    });
+}
+
+function saveWin(levelNumber) {
+    const user = localStorage.getItem("loggedUser");
+    if (!user) return;
+
+    let progress = JSON.parse(localStorage.getItem("wins_" + user)) || {};
+    progress["level" + levelNumber] = true;
+
+    localStorage.setItem("wins_" + user, JSON.stringify(progress));
+}
+
+function goToFrontPage() {
+    location.href = 'index.html';
+}
+
+function hideWinPopup() {
+    const wp = document.getElementById("winPopup");
+    if (wp) wp.classList.add("hidden");
+    gamePaused = false;
+    gameWon = false;
+    flakes = [];
+}
+
+// clicking the win popup hides it and resumes the game
+const winPopupEl = document.getElementById("winPopup");
+if (winPopupEl) {
+    winPopupEl.addEventListener('click', hideWinPopup);
+}
 
 
 class Cell {
@@ -92,12 +133,15 @@ function sendSoldiers(from, to) {
 }
 
 function startAutoSend(from, to) {
+    // block only duplicate SAME connection
     if (activeLinks.some(link => link.from === from && link.to === to)) return;
+
     const interval = setInterval(() => {
-        if (!gameOver && !gamePaused) sendSoldiers(from, to);
-    }, 500); // faster: 500ms instead of 1000ms
+        if (!gamePaused) sendSoldiers(from, to);
+    }, 500);
+
     activeLinks.push({ from, to, interval });
-} 
+}
 
 function stopAutoSendToTarget(target) {
     activeLinks = activeLinks.filter(link => {
@@ -312,6 +356,11 @@ function checkGameEnd() {
     if (allWhite) {
         gameOver = true;
         gameResult = "win";
+        gamePaused = true;
+        gameWon = true;
+        saveWin(1);
+        const wp = document.getElementById("winPopup");
+        if (wp) wp.classList.remove("hidden");
         showEndOverlay("YOU WIN", "All cells are yours!");
     }
 
@@ -381,6 +430,19 @@ function draw() {
     if (!gameOver && !gamePaused) {
         updateSoldiers();
         checkGameEnd();
+    }
+
+    // GOLDEN FLAKES WHEN WON
+    if (gameWon) {
+        if (Math.random() < 0.3) spawnFlake();
+
+        for (let f of flakes) {
+            f.y += f.speed;
+            ctx.fillStyle = "gold";
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     requestAnimationFrame(draw);
