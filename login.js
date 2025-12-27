@@ -67,12 +67,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function hasWon(levelNumber) {
-        const user = localStorage.getItem("loggedUser");
-        if (!user) return false;
+    function getProgress() {
+        return JSON.parse(localStorage.getItem("progress")) || {};
+    }
 
-        const progress = JSON.parse(localStorage.getItem("wins_" + user)) || {};
-        return progress["level" + levelNumber] === true;
+    function isLevelCompleted(level) {
+        const progress = getProgress();
+        return !!progress[`level${level}`];
+    }
+
+    function isLevelUnlocked(level) {
+        if (Number(level) === 1) return true;
+        const progress = getProgress();
+        return !!progress[`level${Number(level) - 1}`];
+    }
+
+    function achievementText(level, name) {
+        const progress = getProgress();
+        return progress[`level${level}`]
+            ? `🏆 ${name} — dokončen`
+            : `🔒 ${name} — nedokončen`;
+    }
+
+    function renderAchievements() {
+        const list = document.getElementById("achievementsList");
+        if (!list) return;
+        list.innerHTML = "";
+
+        const names = {
+            1: "Rookie — Level 1",
+            2: "All-Star — Level 2",
+            3: "Legend — Level 3"
+        };
+
+        [1,2,3].forEach(level => {
+            const completed = isLevelCompleted(level);
+            const row = document.createElement("div");
+            row.className = "achievement-item";
+            if (completed) row.classList.add("gold");
+
+            row.innerHTML = `
+                <span class="emoji">${completed ? "🏆" : "🔒"}</span>
+                <span>${achievementText(level, names[level])}</span>
+            `;
+
+            list.appendChild(row);
+        });
     }
 
     function openAchievements() {
@@ -90,40 +130,40 @@ document.addEventListener('DOMContentLoaded', () => {
         achievementsPopup.classList.add("hidden");
     }
 
-    function renderAchievements() {
-        const list = document.getElementById("achievementsList");
-        if (!list) return;
-        list.innerHTML = "";
+    function updateLevelButtons() {
+        document.querySelectorAll(".level-btn").forEach(btn => {
+            const level = Number(btn.dataset.level);
 
-        const achievements = [
-            { level: 1, icon: "🥉", title: "Rookie", desc: "Level 1 dokončen" },
-            { level: 2, icon: "🥈", title: "All-Star", desc: "Level 2 dokončen" },
-            { level: 3, icon: "🥇", title: "Legend", desc: "Level 3 dokončen" }
-        ];
+            // reset classes
+            btn.classList.remove('locked','unlocked','completed');
 
-        achievements.forEach(a => {
-            const row = document.createElement("div");
-
-            if (hasWon(a.level)) {
-                row.textContent = `${a.icon} ${a.title} — ${a.desc}`;
-                row.style.color = "gold";
+            if (isLevelCompleted(level)) {
+                btn.classList.add("completed");
+                btn.disabled = false;
+                btn.textContent = `LEVEL ${level} 🏆`;
+                btn.onclick = () => location.href = `game.html?level=${level}`;
+            } else if (isLevelUnlocked(level)) {
+                btn.classList.add("unlocked");
+                btn.disabled = false;
+                btn.textContent = `LEVEL ${level}`;
+                btn.onclick = () => location.href = `game.html?level=${level}`;
             } else {
-                row.textContent = `🔒 ${a.title} — ${a.desc}`;
-                row.style.color = "#666";
+                btn.classList.add("locked");
+                btn.disabled = true;
+                btn.textContent = `LEVEL ${level}`;
+                btn.onclick = () => {};
             }
-
-            row.style.fontSize = "18px";
-            row.style.margin = "12px 0";
-
-            list.appendChild(row);
         });
     }
 
-    // expose functions to global scope so onclick attributes work
+    // expose functions to global scope so other code can call them
     window.register = register;
     window.login = login;
     window.logout = logout;
-    window.hasWon = hasWon;
+    window.hasWon = isLevelCompleted; // back-compat
+    window.isLevelCompleted = isLevelCompleted;
+    window.renderAchievements = renderAchievements;
+    window.updateLevelButtons = updateLevelButtons;
     window.openAchievements = openAchievements;
     window.closeAchievements = closeAchievements;
 

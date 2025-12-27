@@ -37,8 +37,8 @@
         <h2>Můžete zkusit náš level:</h2>
 
         <div class="level-buttons">
-            <button id="level1Btn" class="level-button" onclick="location.href='game.html'">LEVEL 1</button>
-            <button disabled>LEVEL 2</button>
+            <button class="level-button level-btn" data-level="1">LEVEL 1</button>
+            <button class="level-button level-btn" data-level="2">LEVEL 2</button>
             <button disabled>LEVEL 3</button>
         </div>
 
@@ -60,65 +60,30 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.hasWon && hasWon(1)) {
-        const b = document.getElementById('level1Btn');
-        if (b) b.classList.add('completed');
-    }
+    // Ensure buttons reflect current progress and lock/unlock rules
+    if (typeof updateLevelButtons === 'function') updateLevelButtons();
 
     const achievementsBtn = document.getElementById("achievementsBtn");
     const achievementsPopup = document.getElementById("achievementsPopup");
-    const achievementsList = document.getElementById("achievementsList");
     const achCloseBtn = document.getElementById("achCloseBtn");
-
-    function renderAchievements() {
-        if (!achievementsList) return;
-        achievementsList.innerHTML = "";
-
-        const achievements = [
-            { level: 1, icon: "🥉", title: "Rookie", desc: "Level 1 dokončen" },
-            { level: 2, icon: "🥈", title: "All-Star", desc: "Level 2 dokončen" },
-            { level: 3, icon: "🥇", title: "Legend", desc: "Level 3 dokončen" }
-        ];
-
-        achievements.forEach(a => {
-            const row = document.createElement("div");
-
-            if (hasWon(a.level)) {
-                row.textContent = `${a.icon} ${a.title} — ${a.desc}`;
-                row.style.color = "gold";
-            } else {
-                row.textContent = `🔒 ${a.title} — ${a.desc}`;
-                row.style.color = "#666";
-            }
-
-            row.style.fontSize = "18px";
-            row.style.margin = "12px 0";
-
-            achievementsList.appendChild(row);
-        });
-    }
 
     if (achievementsBtn) {
         achievementsBtn.addEventListener("click", () => {
-            window.gamePaused = true;
-            if (achievementsPopup) achievementsPopup.classList.remove("hidden");
-            renderAchievements();
+            if (typeof openAchievements === 'function') openAchievements();
+            else {
+                window.gamePaused = true;
+                if (achievementsPopup) achievementsPopup.classList.remove("hidden");
+                if (typeof renderAchievements === 'function') renderAchievements();
+            }
         });
     }
 
     if (achCloseBtn) {
         achCloseBtn.addEventListener("click", () => {
-            if (achievementsPopup) achievementsPopup.classList.add("hidden");
-            window.gamePaused = false;
+            if (typeof closeAchievements === 'function') closeAchievements();
+            else if (achievementsPopup) achievementsPopup.classList.add("hidden");
         });
     }
-
-    // expose renderer/close to global in case other code calls them
-    window.renderAchievements = renderAchievements;
-    window.closeAchievements = () => {
-        if (achievementsPopup) achievementsPopup.classList.add("hidden");
-        window.gamePaused = false;
-    };
 });
 </script>
 

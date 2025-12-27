@@ -13,6 +13,108 @@ let gameOver = false;
 let gameResult = null; // "win" | "lose"
 let gamePaused = false; // when true, AI and refill pause, drawing continues
 let gameWon = false;
+let levelWon = false; // guard against double-win triggers
+
+// ------------------- LEVELS CONFIG -------------------
+const levels = {
+    1: {
+        cells: [
+            { id: 1, x: 100, y: 300, color: "white", lives: 30 },
+            { id: 2, x: 500, y: 400, color: "black", lives: 60 },
+            { id: 3, x: 900, y: 100, color: "blue", lives: 20 },
+            { id: 4, x: 400, y: 700, color: "blue", lives: 20 }
+        ]
+    },
+
+    2: {
+        cells: [
+            { id: 1, x: 100, y: 100, color: "white", lives: 60 },
+
+            { id: 2, x: 800, y: 300, color: "black", lives: 60 },
+            { id: 3, x: 500, y: 700, color: "black", lives: 60 },
+
+            { id: 4, x: 300, y: 300, color: "blue", lives: 20 },
+            { id: 5, x: 600, y: 200, color: "blue", lives: 20 },
+            { id: 6, x: 800, y: 700, color: "blue", lives: 20 }
+        ]
+    }
+};
+
+let currentLevel = 1;
+
+// clear active link intervals and reset list
+function clearAllLinks() {
+    for (let link of activeLinks) {
+        clearInterval(link.interval);
+    }
+    activeLinks = [];
+}
+
+function loadLevel(levelNumber) {
+    clearAllLinks();
+
+    activeSoldiers = [];
+    selectedCell = null;
+    snapTarget = null;
+    cells = [];
+
+    currentLevel = levelNumber;
+    const level = levels[levelNumber];
+    if (!level) return;
+
+    level.cells.forEach(c => {
+        const owner = c.color === "white" ? 1 : c.color === "black" ? 2 : 0;
+        const cell = new Cell(c.x, c.y, 45, c.color, owner);
+        cell.soldiers = c.lives;
+        cell.maxSoldiers = c.lives;
+        cells.push(cell);
+    });
+
+    gameOver = false;
+    gameResult = null;
+    gamePaused = false;
+    gameWon = false;
+    levelWon = false; // reset guard for new run
+    flakes = [];
+}
+
+function showWinNotification() {
+    const ov = document.getElementById("winOverlay");
+    if (!ov) return;
+    const msg = ov.querySelector('#winMessage');
+    if (msg) msg.textContent = `Level ${currentLevel} dokončen`;
+    ov.classList.remove('hidden');
+    gamePaused = true;
+}
+
+function onLevelWin() {
+    if (levelWon) return; // protect from multiple triggers
+    levelWon = true;
+
+    gameOver = true;
+    gameResult = "win";
+    gamePaused = true;
+    gameWon = true;
+
+    // persist progress
+    saveWin(currentLevel);
+
+    // show overlay
+    showWinNotification();
+}
+
+function winGame() {
+    // delegate to the idempotent onLevelWin handler
+    onLevelWin();
+}
+
+function loseGame() {
+    if (gameOver) return;
+    gameOver = true;
+    gameResult = "lose";
+    gamePaused = true;
+    showEndOverlay("YOU LOSE", "The enemy took over everything.");
+}
 
 // golden flakes
 let flakes = [];
@@ -27,14 +129,18 @@ function spawnFlake() {
 }
 
 function saveWin(levelNumber) {
-    const user = localStorage.getItem("loggedUser");
-    if (!user) return;
+    const progress = JSON.parse(localStorage.getItem("progress")) || {};
+    progress[`level${levelNumber}`] = true;
+    localStorage.setItem("progress", JSON.stringify(progress));
 
-    let progress = JSON.parse(localStorage.getItem("wins_" + user)) || {};
-    progress["level" + levelNumber] = true;
-
-    localStorage.setItem("wins_" + user, JSON.stringify(progress));
-}
+    // If index page functions are available (same tab/page), update them
+    try {
+        if (typeof window.updateLevelButtons === 'function') window.updateLevelButtons();
+        if (typeof window.renderAchievements === 'function') window.renderAchievements();
+    } catch (e) {
+        // ignore cross-page or missing functions
+    }
+} 
 
 function goToFrontPage() {
     location.href = 'index.html';
@@ -48,10 +154,33 @@ function hideWinPopup() {
     flakes = [];
 }
 
-// clicking the win popup hides it and resumes the game
+// clicking the (legacy) win popup hides it and resumes the game
 const winPopupEl = document.getElementById("winPopup");
 if (winPopupEl) {
     winPopupEl.addEventListener('click', hideWinPopup);
+}
+
+// Back to menu button in the new win overlay
+const backToMenuBtn = document.getElementById("backToMenuBtn");
+if (backToMenuBtn) {
+    backToMenuBtn.addEventListener('click', () => {
+        // cleanup state
+        try { clearAllLinks(); } catch (e) {}
+        activeSoldiers = [];
+        selectedCell = null;
+        snapTarget = null;
+        gameOver = false;
+        gamePaused = false;
+        gameWon = false;
+        levelWon = false;
+        flakes = [];
+
+        const ov = document.getElementById("winOverlay");
+        if (ov) ov.classList.add("hidden");
+
+        // navigate back to front page
+        window.location.href = "index.html";
+    });
 }
 
 
@@ -154,23 +283,18 @@ function stopAutoSendToTarget(target) {
 }
 
 // ------------------- CELLS -------------------
-let cells = [
-    // Player cell (WHITE)
-    new Cell(300, 400, 45, "white", 1),
+let cells = [];
 
-    // Enemy cell (BLACK)
-    new Cell(700, 300, 45, "black", 2),
-
-    // Neutral cells (BLUE)
-    new Cell(500, 550, 45, "blue", 0),
-    new Cell(900, 500, 45, "blue", 0),
-];
-
-// Set starting soldiers explicitly
-cells[0].soldiers = 30; // player
-cells[1].soldiers = 60; // enemy
-cells[2].soldiers = 20;
-cells[3].soldiers = 20;
+// By default, load Level 2 (you can call loadLevel(n) to switch)
+// Respect ?level= URL param when present
+try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const levelParam = parseInt(urlParams.get('level'), 10);
+    if (!isNaN(levelParam)) loadLevel(levelParam);
+    else loadLevel(2);
+} catch (e) {
+    loadLevel(2);
+}
 
 // ------------------- MOUSE EVENTS -------------------
 canvas.addEventListener("mousemove", (e) => {
@@ -350,25 +474,11 @@ setInterval(() => {
 function checkGameEnd() {
     if (gameOver) return;
 
-    const allWhite = cells.every(c => c.owner === 1);
-    const allBlack = cells.every(c => c.owner === 2);
+    const hasWhite = cells.some(c => c.color === "white");
+    const hasBlack = cells.some(c => c.color === "black");
 
-    if (allWhite) {
-        gameOver = true;
-        gameResult = "win";
-        gamePaused = true;
-        gameWon = true;
-        saveWin(1);
-        const wp = document.getElementById("winPopup");
-        if (wp) wp.classList.remove("hidden");
-        showEndOverlay("YOU WIN", "All cells are yours!");
-    }
-
-    if (allBlack) {
-        gameOver = true;
-        gameResult = "lose";
-        showEndOverlay("YOU LOSE", "The enemy took over everything.");
-    }
+    if (!hasWhite) loseGame();
+    if (!hasBlack && cells.every(c => c.color === "white")) winGame();
 }
 
 function showEndOverlay(title, text) {

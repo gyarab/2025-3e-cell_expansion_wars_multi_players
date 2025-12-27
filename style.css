@@ -99,6 +99,25 @@ section {
     cursor: not-allowed;
 }
 
+/* Level button states */
+.level-btn.locked {
+    background: #444;
+    opacity: 0.8;
+    cursor: not-allowed;
+    color: #ccc;
+}
+
+.level-btn.unlocked {
+    background: #1f8f3a; /* green */
+    color: white;
+}
+
+.level-btn.completed {
+    background: linear-gradient(45deg, gold, #ffd700);
+    color: black;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
 /* -------- MULTIPLAYER BUTTON -------- */
 .multiplayer-button {
     margin-top: 110px; /* ≈ 3 cm */
@@ -355,6 +374,22 @@ section {
     box-shadow: 0 0 20px rgba(255,255,255,0.08);
 }
 
+.achievement-item {
+    background: #111;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.achievement-item.gold {
+    background: linear-gradient(135deg, #d4af37, #ffd700);
+    color: black;
+}
+
 .notification {
     position: fixed;
     top: 50%;
@@ -396,6 +431,10 @@ section {
     z-index: 1001;
 }
 
+.overlay.hidden {
+    display: none;
+}
+
 .overlayContent {
     background: #111;
     color: white;
@@ -404,6 +443,35 @@ section {
     max-width: 600px;
     text-align: left;
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+/* Win Overlay box */
+.overlay-box {
+    background: #111;
+    border-radius: 16px;
+    padding: 30px 40px;
+    text-align: center;
+    color: white;
+    min-width: 300px;
+}
+
+.overlay-box.win {
+    border: 2px solid gold;
+}
+
+.overlay-box button {
+    margin-top: 20px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: none;
+    background: white;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.overlay-box button:hover {
+    background: gold;
 }
 
 /* -------- WIN POPUP + FLAKES -------- */
