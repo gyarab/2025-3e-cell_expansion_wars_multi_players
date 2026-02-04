@@ -28,5 +28,9 @@ urlpatterns = [
     re_path(r"^user(?P<uid>[0-9]+?)/level/??$", views.level_select),
     re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/??$", views.game_config),
     re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.game),
-    re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/notify/??$", views.game_notifier)
+    re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/notify/??$", views.game_notifier),
+    re_path(r"^user(?P<uid>[0-9]+?)/preset/??$", views.preset_select),
+    re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/??$", views.multi_player_game_config),
+    re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.multi_player_game),
+    re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/notify/??$", views.multi_player_game_notifier)
 ]
