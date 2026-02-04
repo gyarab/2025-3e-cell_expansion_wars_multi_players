@@ -21,14 +21,15 @@ class Playthrough(models.Model):
 
 class Player(models.Model):
     email = models.CharField(max_length=35)
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
+    first_name = models.CharField(max_length=30, null=True)
+    last_name = models.CharField(max_length=30, null=True)
     password_hash = models.BinaryField(max_length=32)
 
 class Player_Playthrough(models.Model):
     end_of_player_datetime = models.DateTimeField(null=True)
     virt_time_in_game = models.PositiveIntegerField()
     real_time_in_game = models.DurationField()
+    registered_actions_count = models.PositiveIntegerField()
     playthrough = models.ForeignKey(Playthrough, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
 
