@@ -1,13 +1,13 @@
 from django.db import models
 
-class Level(models.Model):
+class LevelOrPreset(models.Model):
     data = models.JSONField(max_length=5000)
 
 class Playthrough(models.Model):
     start_datetime = models.DateTimeField()
-    end_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField(null=True)
     level = models.OneToOneField(
-        Level,
+        LevelOrPreset,
         on_delete=models.SET_NULL,
         related_name="playthrough",
         null=True
