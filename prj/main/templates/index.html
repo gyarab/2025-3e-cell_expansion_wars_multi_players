@@ -31,14 +31,17 @@
         <h2>Můžete zkusit náš level:</h2>
 
         <div class="level-buttons">
-            <button class="level-button level-btn" data-level="1">LEVEL 1</button>
-            <button class="level-button level-btn" data-level="2">LEVEL 2</button>
-            <button disabled>LEVEL 3</button>
+            {% for level, enabled in levels %}
+            <button {% if enabled %}class="level-button level-btn" data-level="{{ forloop.counter }}"{% else %}disabled{% endif %}>{{ level }}</button>
+            {% endfor %}
         </div>
 
         <!-- Multiplayer button -->
         <div class="multiplayer-button">
-            <button disabled>MULTIPLAYER (COMING SOON)</button>
+            {% for preset, enabled in presets %}
+            <button {% if enabled %}class="level-button preset-btn" data-preset="{{ forloop.counter }}"{% else %}disabled{% endif %}>{{ preset }}</button>
+            {% endfor %}
+            <button class="level-button preset-btn" data-preset="+">CUSTOM CONFIGURATION</button>
         </div>
     </section>
 
