@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser
 
 class LevelOrPreset(models.Model):
     data = models.JSONField(max_length=5000)
@@ -19,11 +20,12 @@ class Playthrough(models.Model):
     )
     game_state = models.JSONField(max_length=2500)
 
-class Player(models.Model):
-    email = models.CharField(max_length=35)
+class Player(AbstractBaseUser):
+    email = models.CharField(max_length=40, unique=True)
     first_name = models.CharField(max_length=30, null=True)
     last_name = models.CharField(max_length=30, null=True)
-    password_hash = models.BinaryField(max_length=32)
+    USERNAME_FIELD = "email"
+    EMAIL_FIELD = "email"
 
 class Player_Playthrough(models.Model):
     end_of_player_datetime = models.DateTimeField(null=True)
