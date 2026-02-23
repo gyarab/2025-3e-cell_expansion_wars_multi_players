@@ -24,13 +24,15 @@ urlpatterns = [
     path("", views.homepage),
     re_path(r"^login/??$", views.login),
     re_path(r"^register/??$", views.register),
+    re_path(r"^logout/??$", views.logout),
     re_path(r"^user(?P<uid>[0-9]+?/??$", views.user_homepage),
+    re_path(r"^user(?P<uid>[0-9]+?/logout/??$", views.user_logout),
     re_path(r"^user(?P<uid>[0-9]+?)/level/??$", views.level_select),
     re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/??$", views.game_config),
     re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.game),
-    re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/notify/??$", views.game_notifier),
+    #re_path(r"^ws/user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.game_socket),
     re_path(r"^user(?P<uid>[0-9]+?)/preset/??$", views.preset_select),
     re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/??$", views.multi_player_game_config),
-    re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.multi_player_game),
-    re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/notify/??$", views.multi_player_game_notifier)
+    re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.multi_player_game)
+    #re_path(r"^ws/user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.multi_player_game_socket)
 ]
