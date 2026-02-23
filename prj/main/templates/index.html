@@ -3,6 +3,12 @@
 {% block content %}
 
 <div id="loginBox">
+{% if whole_user_name %}
+    <div id="userPanel">
+        <span id="welcomeText">Hello, {{ whole_user_name }}</span>
+        <button onclick="logout()">Logout</button>
+    </div>
+{% else %}
     <div id="loginForm">
         <input type="text" id="username" placeholder="Name">
         <input type="password" id="password" placeholder="Password">
@@ -10,11 +16,7 @@
         <button onclick="register()">Register</button>
         <p id="loginMessage"></p>
     </div>
-
-    <div id="userPanel" class="hidden">
-        <span id="welcomeText"></span>
-        <button onclick="logout()">Logout</button>
-    </div>
+{% endif %}
 </div>
 
     <!-- 🌟 Section 1: Hero / Title -->
