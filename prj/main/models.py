@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 
 class LevelOrPreset(models.Model):
+    id = models.AutoField()
+    level_or_preset = models.BooleanField()
+    visible_name = models.CharField(max_length=15, null=True)
+    enabled = models.BooleanField()
     data = models.JSONField(max_length=5000)
 
 class Playthrough(models.Model):
