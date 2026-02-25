@@ -3,7 +3,7 @@
 {% block content %}
 
 <div id="loginBox">
-{% if whole_user_name %}
+{% if whole_user_name != None %}
     <div id="userPanel">
         <span id="welcomeText">Hello, {{ whole_user_name }}</span>
         <button onclick="logout()">Logout</button>

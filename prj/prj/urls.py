@@ -25,7 +25,7 @@ urlpatterns = [
     re_path(r"^login/??$", views.login),
     re_path(r"^register/??$", views.register),
     re_path(r"^logout/??$", views.logout),
-    re_path(r"^user(?P<uid>[0-9]+?/??$", views.user_homepage),
+    re_path(r"^user(?P<uid>[0-9]+?/??$", views.user_profile),
     re_path(r"^user(?P<uid>[0-9]+?/logout/??$", views.user_logout),
     re_path(r"^user(?P<uid>[0-9]+?)/level/??$", views.level_select),
     re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/??$", views.game_config),
