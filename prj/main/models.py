@@ -26,9 +26,11 @@ class Playthrough(models.Model):
 
 class Player(AbstractBaseUser):
     email = models.CharField(max_length=40, unique=True)
+    username = models.CharField(max_length=30, unique=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
-    USERNAME_FIELD = "email"
+    email_address_for_login = models.BooleanField(default=True)
+    USERNAME_FIELD = "username"
     EMAIL_FIELD = "email"
 
 class Player_Playthrough(models.Model):

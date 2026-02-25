@@ -22,9 +22,9 @@ from main import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.homepage),
-    re_path(r"^login/??$", views.login),
+    re_path(r"^login/??$", views.login_view),
     re_path(r"^register/??$", views.register),
-    re_path(r"^logout/??$", views.logout),
+    re_path(r"^logout/??$", views.logout_view),
     re_path(r"^user(?P<uid>[0-9]+?/??$", views.user_profile),
     re_path(r"^user(?P<uid>[0-9]+?/logout/??$", views.user_logout),
     re_path(r"^user(?P<uid>[0-9]+?)/level/??$", views.level_select),
