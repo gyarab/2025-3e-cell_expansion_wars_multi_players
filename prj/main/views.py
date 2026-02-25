@@ -16,7 +16,7 @@ def get_whole_name(user):
 # Create your views here.
 async def homepage(request):
     if request.method != "GET":
-        raise BadRequest
+        raise BadRequest()
 
     name = get_whole_name(await request.auser())
     
@@ -39,7 +39,7 @@ async def login_view(request):
         try:
             login_str, passwd = data
         except Exception:
-            raise BadRequest
+            raise BadRequest()
 
         fail = HttpResponse("fail", content_type="text/plain")
 
@@ -56,3 +56,14 @@ async def login_view(request):
             return HttpResponse("success", content_type="text/plain")
 
         else: return fail
+    
+    raise BadRequest()
+    
+async def logout_view(request, uid):
+    logout(request)
+    return HttpResponse("success", content_type="text/plain")
+
+async def user_profile(request, uid):
+    player = await request.auser()
+    data = {field: getattr(player, field) for field in ("email", "username", "first_name", "last_name")}
+    return render("user_profile.html", request, data)
