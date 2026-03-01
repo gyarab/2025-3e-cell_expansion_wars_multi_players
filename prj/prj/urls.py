@@ -23,16 +23,14 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.homepage),
     re_path(r"^login/??$", views.login_view),
-    re_path(r"^register/??$", views.register),
+    re_path(r"^register/??$", views.register_view),
+    re_path(r"^username_exists/(?P<username>.+?)/??$", views.username_exists),
     #re_path(r"^logout/??$", views.logout_view),
     re_path(r"^user(?P<uid>[0-9]+?/??$", views.user_profile),
     re_path(r"^user(?P<uid>[0-9]+?/change_info/??$", views.change_user_info),
     re_path(r"^user(?P<uid>[0-9]+?/logout/??$", views.logout_view),
-    re_path(r"^user(?P<uid>[0-9]+?)/level/??$", views.level_select),
-    re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/??$", views.game_config),
     re_path(r"^user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.game),
     #re_path(r"^ws/user(?P<uid>[0-9]+?)/level(?P<level_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.game_socket),
-    re_path(r"^user(?P<uid>[0-9]+?)/preset/??$", views.preset_select),
     re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/??$", views.multi_player_game_config),
     re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.multi_player_game)
     #re_path(r"^ws/user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.multi_player_game_socket)
