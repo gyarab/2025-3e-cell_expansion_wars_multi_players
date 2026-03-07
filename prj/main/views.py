@@ -12,6 +12,9 @@ from django.http import HttpResponse
 from django.conf import settings 
 from main import models
 
+for funcname in "login", "logout", "render":
+    globals()[funcname] = sync_to_async(globals()[funcname])
+
 content_type = "text/html; charset=utf-8"
 
 def get_whole_name(user):
@@ -33,7 +36,7 @@ st405 = HttpResponse(status=405)
 
 # Create your views here.
 async def homepage(request):
-    if request != "GET":
+    if request.method != "GET":
         return st405
 
     name = get_whole_name(await request.auser())
@@ -78,12 +81,12 @@ async def login_view(request):
             return fail
 
         if user.check_password(passwd):
-            login(request, user)
+            await login(request, user)
             return success
 
         return fail
     
-    raise BadRequest()
+    return st405
     
 async def logout_view(request, uid):
     if request != "POST":
@@ -93,7 +96,7 @@ async def logout_view(request, uid):
     return success
 
 async def user_profile(request, uid):
-    if request != "GET":
+    if request.method != "GET":
         return st405
 
     player = await request.auser()
@@ -101,7 +104,7 @@ async def user_profile(request, uid):
     return render(request, "user_profile.html", data, content_type=content_type)
 
 async def change_user_info(request, uid):
-    if request != "POST":
+    if request.method != "POST":
         return st405
 
     changable_fields = ("username", "first_name", "last_name")
@@ -111,28 +114,28 @@ async def change_user_info(request, uid):
         if len(change) != 2 or not change[0] in changable_fields:
             raise BadRequest()
 
-    player = await request.auser()
-    
-    for change in changes:
-        setattr(player, *change)
-
     try:
-        player.save()
+        @sync_to_async
+        def make_the_change():
+            with transaction.atomic():
+                player = request.user()
+                for change in changes:
+                    setattr(player, *change)
+                player.save()
+
+        await make_the_change()
     except IntegrityError:
         return fail
     
     return success
 
 
-MAX_ATTEMPTS = 5
-LOCKOUT_SECONDS = 60
-
 @csrf_protect
 async def register_view(request):
     now_ts = timezone.now().timestamp()
 
     if request.method == "GET":
-        return await sync_to_async(render)(request, "register.html")
+        return await render(request, "register.html")
 
     if request.method != "POST":
         return st405
@@ -141,7 +144,7 @@ async def register_view(request):
     email = request.POST.get("email", "").strip().lower()
     password = request.POST.get("password", "")
 
-    # --- základní validace ---
+    # --- validation ---
     if len(username) > 30 or len(email) > 40 or not username or not email or not password:
         return fail
 
@@ -150,7 +153,7 @@ async def register_view(request):
     except ValidationError:
         return fail
 
-    # --- vytvoření uživatele ---
+    # --- user creation ---
     try:
         @sync_to_async
         def create_user():
@@ -166,7 +169,107 @@ async def register_view(request):
     except (ValidationError, IntegrityError):
         return fail
 
-    if not (await request.auser()).is_authenticated():
-        await sync_to_async(login)(request, player)
+    if not (await request.auser()).is_authenticated:
+        await login(request, player)
 
     return success
+
+async def game(request, uid, level_id, game_id):
+    if request.method != "GET":
+        return st405
+
+    user = await request.auser()
+
+    if not user.is_authenticated or user.id != int(uid):
+        return fail
+
+    try:
+        level = await models.LevelOrPreset.objects.aget(id=level_id, level_or_preset=True)
+        playthrough = await models.Playthrough.objects.aget(id=game_id, level=level)
+    except models.LevelOrPreset.DoesNotExist:
+        return fail
+    except models.Playthrough.DoesNotExist:
+        return fail
+
+    data = {
+        "level_id": level.id,
+        "level_name": level.visible_name,
+        "playthrough_id": playthrough.id,
+        "whole_user_name": get_whole_name(user),
+    }
+
+    return await render(request, "game.html", data, content_type=content_type)
+
+async def multi_player_game_config(request, uid, preset_id):
+    if request.method != "POST":
+        return st405
+
+    user = await request.auser()
+
+    if not user.is_authenticated or user.id != int(uid):
+        return fail
+
+    try:
+        preset = await models.LevelOrPreset.objects.aget(id=preset_id, level_or_preset=False)
+    except models.LevelOrPreset.DoesNotExist:
+        return fail
+
+    @sync_to_async
+    def create_playthrough():
+        with transaction.atomic():
+            play = models.Playthrough.objects.create(
+                start_datetime=timezone.now(),
+                level=preset,
+                game_state={}
+            )
+
+            models.Player_Playthrough.objects.create(
+                player=user,
+                playthrough=play,
+                virt_time_in_game=0,
+                real_time_in_game=0,
+                registered_actions_count=0
+            )
+
+            return play.id
+
+    play_id = await create_playthrough()
+
+    return HttpResponse(str(play_id), content_type="text/plain")
+
+async def multi_player_game(request, uid, preset_id, game_id):
+    if request.method != "GET":
+        return st405
+
+    user = await request.auser()
+
+    if not user.is_authenticated or user.id != int(uid):
+        return fail
+
+    try:
+        play = await models.Playthrough.objects.aget(id=game_id)
+    except models.Playthrough.DoesNotExist:
+        return fail
+
+    # ověř že user patří do hry
+    try:
+        await models.Player_Playthrough.objects.aget(
+            player=user,
+            playthrough=play
+        )
+    except models.Player_Playthrough.DoesNotExist:
+        return fail
+
+    players = []
+
+    async for p in models.Player.objects.filter(playthroughs=play).values("id", "username"):
+        players.append(p)
+
+    data = {
+        "playthrough_id": play.id,
+        "preset_id": preset_id,
+        "players": players,
+        "whole_user_name": get_whole_name(user),
+    }
+
+    return await render(request, "multi_game.html", data, content_type=content_type)
