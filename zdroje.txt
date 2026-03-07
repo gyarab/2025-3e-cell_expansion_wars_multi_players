@@ -1,0 +1,20 @@
+https://docs.djangoproject.com/en/6.0/ref/csrf/
+https://docs.djangoproject.com/en/6.0/ref/templates/builtins/
+https://docs.djangoproject.com/en/6.0/topics/email/
+https://docs.djangoproject.com/en/6.0/topics/async/
+https://docs.djangoproject.com/en/6.0/topics/http/urls/
+https://docs.djangoproject.com/en/6.0/topics/http/views/
+https://docs.djangoproject.com/en/6.0/topics/http/decorators/
+https://docs.djangoproject.com/en/6.0/topics/db/queries/
+https://docs.djangoproject.com/en/6.0/topics/db/aggregation/
+https://docs.djangoproject.com/en/6.0/topics/db/transactions/
+https://docs.djangoproject.com/en/6.0/topics/db/optimization/
+https://docs.djangoproject.com/en/6.0/topics/db/fixtures/
+https://docs.djangoproject.com/en/6.0/ref/request-response/
+https://docs.djangoproject.com/en/6.0/ref/models/fields/
+https://docs.djangoproject.com/en/6.0/ref/settings/
+https://docs.djangoproject.com/en/6.0/ref/contrib/auth/
+https://docs.djangoproject.com/en/6.0/topics/auth/default/
+https://docs.djangoproject.com/en/6.0/topics/auth/customizing/
+Všechny části tutoriálu: https://channels.readthedocs.io/en/latest/tutorial/index.html
+https://channels.readthedocs.io/en/latest/topics/databases.html
