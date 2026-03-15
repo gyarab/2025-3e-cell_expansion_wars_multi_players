@@ -1,6 +1,7 @@
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_GET, require_POST
 from django.utils import timezone
 from asgiref.sync import sync_to_async
 from django.core.exceptions import BadRequest
@@ -9,7 +10,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import login, logout
 from django.shortcuts import render
 from django.http import HttpResponse
-from django.conf import settings 
+from django.conf import settings
 from main import models
 
 for funcname in "login", "logout", "render":
@@ -21,24 +22,23 @@ def get_whole_name(user):
     names = [name for name in (user.first_name, user.last_name) if name != ""]
     return " ".join(names) if user.is_authenticated else None
 
+"""
 def req_body(request):
     encoding = request.encoding
     if not encoding:
         encoding = settings.DEFAULT_CHARSET
     
     return request.body.decode(encoding)
+"""
 
-success = HttpResponse("success", content_type="text/plain")
-fail = HttpResponse("fail", content_type="text/plain")
-yes = HttpResponse("yes", content_type="text/plain")
-no = HttpResponse("no", content_type="text/plain")
+success = HttpResponse("success", content_type=content_type)
+fail = HttpResponse("fail", content_type=content_type)
+yes = HttpResponse("yes", content_type=content_type)
+no = HttpResponse("no", content_type=content_type)
 st405 = HttpResponse(status=405)
 
-# Create your views here.
+@require_GET
 async def homepage(request):
-    if request.method != "GET":
-        return st405
-
     name = get_whole_name(await request.auser())
     
     presets = []
@@ -50,16 +50,15 @@ async def homepage(request):
     data = {"levels": levels, "presets": presets, "whole_user_name": name}
     return render(request, "index.html", data, content_type=content_type)
 
+@require_GET
 async def username_exists(request, username):
-    if request != "GET":
-        return st405
-
     try:
         await models.Player.objects.values("username").aget(username=username)
     except models.Player.DoesNotExist:
         return no
     return yes
 
+@csrf_protect
 async def login_view(request):
     if request.method == "GET":
         data = {"whole_user_name": get_whole_name(await request.auser())}
@@ -67,10 +66,9 @@ async def login_view(request):
 
     if request.method == "POST":
         try:
-            login_str, passwd = req_body(request).strip().splitlines()
+            login_str, passwd = list(request.POST.items())
         except Exception:
-            raise BadRequest()
-
+            st405
 
         try:
             if "@" in login_str:
@@ -87,38 +85,33 @@ async def login_view(request):
         return fail
     
     return st405
-    
-async def logout_view(request, uid):
-    if request != "POST":
-        return st405
-    
+
+@require_POST
+async def logout_view(request, uid):    
     logout(request)
     return success
 
+@require_GET
 async def user_profile(request, uid):
-    if request.method != "GET":
-        return st405
-
     player = await request.auser()
     data = {field: getattr(player, field) for field in ("email", "username", "first_name", "last_name")}
     return render(request, "user_profile.html", data, content_type=content_type)
 
+@require_POST
+@csrf_protect
 async def change_user_info(request, uid):
-    if request.method != "POST":
-        return st405
-
     changable_fields = ("username", "first_name", "last_name")
-    changes = [line.split(":") for line in req_body(request).strip().splitlines()]
-    
+    changes = list(request.POST.items())
+
     for change in changes:
         if len(change) != 2 or not change[0] in changable_fields:
-            raise BadRequest()
+            return st405
 
     try:
         @sync_to_async
         def make_the_change():
             with transaction.atomic():
-                player = request.user()
+                player = request.user
                 for change in changes:
                     setattr(player, *change)
                 player.save()
@@ -132,8 +125,6 @@ async def change_user_info(request, uid):
 
 @csrf_protect
 async def register_view(request):
-    now_ts = timezone.now().timestamp()
-
     if request.method == "GET":
         return await render(request, "register.html")
 
@@ -174,13 +165,14 @@ async def register_view(request):
 
     return success
 
+@csrf_protect
 async def game(request, uid, level_id, game_id):
     if request.method != "GET":
         return st405
 
     user = await request.auser()
 
-    if not user.is_authenticated or user.id != int(uid):
+    if not user.is_authenticated:
         return fail
 
     try:
@@ -200,6 +192,7 @@ async def game(request, uid, level_id, game_id):
 
     return await render(request, "game.html", data, content_type=content_type)
 
+@csrf_protect
 async def multi_player_game_config(request, uid, preset_id):
     if request.method != "POST":
         return st405
@@ -237,6 +230,7 @@ async def multi_player_game_config(request, uid, preset_id):
 
     return HttpResponse(str(play_id), content_type="text/plain")
 
+@csrf_protect
 async def multi_player_game(request, uid, preset_id, game_id):
     if request.method != "GET":
         return st405
