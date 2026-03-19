@@ -48,7 +48,7 @@ async def homepage(request):
         (levels if e.level_or_preset else presets).append((e.id, e.visible_name, e.enabled))
 
     data = {"levels": levels, "presets": presets, "whole_user_name": name}
-    return render(request, "index.html", data, content_type=content_type)
+    return await render(request, "index.html", data, content_type=content_type)
 
 @require_GET
 async def username_exists(request, username):
@@ -62,7 +62,7 @@ async def username_exists(request, username):
 async def login_view(request):
     if request.method == "GET":
         data = {"whole_user_name": get_whole_name(await request.auser())}
-        return render(request, "login.html", data, content_type=content_type)
+        return await render(request, "login.html", data, content_type=content_type)
 
     if request.method == "POST":
         try:
@@ -95,8 +95,9 @@ async def logout_view(request, uid):
 async def user_profile(request, uid):
     player = await request.auser()
     data = {field: getattr(player, field) for field in ("email", "username", "first_name", "last_name")}
-    return render(request, "user_profile.html", data, content_type=content_type)
+    return await render(request, "user_profile.html", data, content_type=content_type)
 
+passwd_name = "pass"
 @require_POST
 @csrf_protect
 async def change_user_info(request, uid):
@@ -104,7 +105,7 @@ async def change_user_info(request, uid):
     changes = list(request.POST.items())
 
     for change in changes:
-        if len(change) != 2 or not change[0] in changable_fields:
+        if len(change) != 2 or not (change[0] in changable_fields or change[0] == passwd_name):
             return st405
 
     try:
@@ -113,11 +114,15 @@ async def change_user_info(request, uid):
             with transaction.atomic():
                 player = request.user
                 for change in changes:
-                    setattr(player, *change)
+                    if change[0] == passwd_name:
+                        validate_password(change[1], user=player)
+                        player.set_password(change[1])
+                    else:
+                        setattr(player, *change)
                 player.save()
 
         await make_the_change()
-    except IntegrityError:
+    except (IntegrityError, ValidationError):
         return fail
     
     return success
@@ -192,14 +197,12 @@ async def game(request, uid, level_id, game_id):
 
     return await render(request, "game.html", data, content_type=content_type)
 
+@require_POST
 @csrf_protect
 async def multi_player_game_config(request, uid, preset_id):
-    if request.method != "POST":
-        return st405
-
     user = await request.auser()
 
-    if not user.is_authenticated or user.id != int(uid):
+    if not user.is_authenticated:
         return fail
 
     try:
@@ -213,7 +216,7 @@ async def multi_player_game_config(request, uid, preset_id):
             play = models.Playthrough.objects.create(
                 start_datetime=timezone.now(),
                 level=preset,
-                game_state={}
+                game_state=preset.data
             )
 
             models.Player_Playthrough.objects.create(
@@ -237,7 +240,7 @@ async def multi_player_game(request, uid, preset_id, game_id):
 
     user = await request.auser()
 
-    if not user.is_authenticated or user.id != int(uid):
+    if not user.is_authenticated:
         return fail
 
     try:
