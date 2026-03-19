@@ -48,7 +48,7 @@ async def homepage(request):
         (levels if e.level_or_preset else presets).append((e.id, e.visible_name, e.enabled))
 
     data = {"levels": levels, "presets": presets, "whole_user_name": name}
-    return await render(request, "index.html", data, content_type=content_type)
+    return await render(request, "all.html", data, content_type=content_type)
 
 @require_GET
 async def username_exists(request, username):
@@ -62,7 +62,7 @@ async def username_exists(request, username):
 async def login_view(request):
     if request.method == "GET":
         data = {"whole_user_name": get_whole_name(await request.auser())}
-        return await render(request, "login.html", data, content_type=content_type)
+        return await render(request, "all.html", data, content_type=content_type)
 
     if request.method == "POST":
         try:
@@ -95,7 +95,7 @@ async def logout_view(request, uid):
 async def user_profile(request, uid):
     player = await request.auser()
     data = {field: getattr(player, field) for field in ("email", "username", "first_name", "last_name")}
-    return await render(request, "user_profile.html", data, content_type=content_type)
+    return await render(request, "all.html", data, content_type=content_type)
 
 passwd_name = "pass"
 @require_POST
@@ -131,7 +131,7 @@ async def change_user_info(request, uid):
 @csrf_protect
 async def register_view(request):
     if request.method == "GET":
-        return await render(request, "register.html")
+        return await render(request, "all.html")
 
     if request.method != "POST":
         return st405
@@ -195,7 +195,7 @@ async def game(request, uid, level_id, game_id):
         "whole_user_name": get_whole_name(user),
     }
 
-    return await render(request, "game.html", data, content_type=content_type)
+    return await render(request, "all.html", data, content_type=content_type)
 
 @require_POST
 @csrf_protect
@@ -233,11 +233,9 @@ async def multi_player_game_config(request, uid, preset_id):
 
     return HttpResponse(str(play_id), content_type="text/plain")
 
+@require_GET
 @csrf_protect
 async def multi_player_game(request, uid, preset_id, game_id):
-    if request.method != "GET":
-        return st405
-
     user = await request.auser()
 
     if not user.is_authenticated:
@@ -269,4 +267,4 @@ async def multi_player_game(request, uid, preset_id, game_id):
         "whole_user_name": get_whole_name(user),
     }
 
-    return await render(request, "multi_game.html", data, content_type=content_type)
+    return await render(request, "all.html", data, content_type=content_type)
