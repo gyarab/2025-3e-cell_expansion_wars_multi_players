@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
+
+    // najdeme všechny elementy na stránce které budeme používat
     const loginForm = document.getElementById("loginForm");
     const userPanel = document.getElementById("userPanel");
     const welcomeText = document.getElementById("welcomeText");
@@ -6,166 +8,352 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = document.getElementById("username");
     const password = document.getElementById("password");
 
+    // REGISTRACE - uloží nového uživatele
     function register() {
         const user = username.value.trim();
         const pass = password.value.trim();
 
+        // zkontrolujeme jestli jsou pole vyplněná
         if (!user || !pass) {
             message.textContent = "Vyplň jméno a heslo";
             message.style.color = "#f55";
             return;
         }
 
+        // uložíme uživatele do localStorage
         localStorage.setItem("user_" + user, pass);
+
+        // vytvoříme prázdný progress pro tohoto uživatele
+        const existujiciProgress = localStorage.getItem("progress_" + user);
+        if (existujiciProgress === null) {
+            localStorage.setItem("progress_" + user, JSON.stringify({}));
+        }
 
         message.style.color = "#5f5";
         message.textContent = "Registrace hotová, přihlas se";
 
-        // ✅ clear inputs after register
+        // vyčistíme pole
         username.value = "";
         password.value = "";
     }
 
+    // PŘIHLÁŠENÍ - ověří uživatele a přihlásí ho
     function login() {
         const user = username.value.trim();
         const pass = password.value.trim();
-        const stored = localStorage.getItem("user_" + user);
 
-        if (stored === pass) {
+        // načteme uložené heslo pro tohoto uživatele
+        const ulozeneHeslo = localStorage.getItem("user_" + user);
+
+        // porovnáme hesla
+        if (ulozeneHeslo === pass) {
+            // heslo sedí - přihlásíme uživatele
             localStorage.setItem("loggedUser", user);
 
-            // ✅ clear inputs after login
+            // vyčistíme pole
             username.value = "";
             password.value = "";
             message.textContent = "";
 
+            // zobrazíme panel přihlášeného uživatele
             showUser();
+
+            // aktualizujeme tlačítka levelů
+            if (typeof updateLevelButtons === 'function') {
+                updateLevelButtons();
+            }
         } else {
+            // heslo nesedí - zobrazíme chybu
             message.textContent = "Špatné přihlášení";
             message.style.color = "#f55";
         }
     }
 
+    // ODHLÁŠENÍ - odhlásí uživatele
     function logout() {
+        // smažeme přihlášeného uživatele
         localStorage.removeItem("loggedUser");
 
-        // ✅ clear inputs so nothing stays visible
+        // vyčistíme pole
         username.value = "";
         password.value = "";
         message.textContent = "";
 
+        // zobrazíme přihlašovací formulář
         loginForm.classList.remove("hidden");
         userPanel.classList.add("hidden");
-    }
 
-    function showUser() {
-        const user = localStorage.getItem("loggedUser");
-        if (user) {
-            if (loginForm) loginForm.classList.add("hidden");
-            if (userPanel) userPanel.classList.remove("hidden");
-            if (welcomeText) welcomeText.textContent = "Hello, " + user;
+        // aktualizujeme tlačítka levelů
+        if (typeof updateLevelButtons === 'function') {
+            updateLevelButtons();
         }
     }
 
-    function getProgress() {
-        return JSON.parse(localStorage.getItem("progress")) || {};
+    // ZOBRAZENÍ UŽIVATELE - zkontroluje localStorage a zobrazí panel
+    function showUser() {
+        const user = localStorage.getItem("loggedUser");
+
+        if (user) {
+            if (loginForm) {
+                loginForm.classList.add("hidden");
+            }
+            if (userPanel) {
+                userPanel.classList.remove("hidden");
+            }
+            if (welcomeText) {
+                welcomeText.textContent = "Hello, " + user;
+            }
+        }
     }
 
+    // ZÍSKÁNÍ PŘIHLÁŠENÉHO UŽIVATELE - vrátí jméno nebo null
+    function getLoggedUser() {
+        const user = localStorage.getItem("loggedUser");
+        return user;
+    }
+
+    // ZÍSKÁNÍ PROGRESSU - načte postup přihlášeného hráče
+    function getProgress() {
+        // zjistíme kdo je přihlášen
+        const user = getLoggedUser();
+
+        // pokud nikdo není přihlášen, vrátíme prázdný objekt
+        if (!user) {
+            return {};
+        }
+
+        // vytvoříme klíč pro tohoto hráče
+        const klic = "progress_" + user;
+
+        // načteme data z localStorage
+        const data = localStorage.getItem(klic);
+
+        // pokud tam nic není, vrátíme prázdný objekt
+        if (data === null) {
+            return {};
+        }
+
+        // převedeme text na objekt a vrátíme ho
+        const progress = JSON.parse(data);
+        return progress;
+    }
+
+    // ULOŽENÍ PROGRESSU - uloží postup přihlášeného hráče
+    function saveProgress(progress) {
+        const user = getLoggedUser();
+
+        // pokud nikdo není přihlášen, nic neukládáme
+        if (!user) {
+            return;
+        }
+
+        // vytvoříme klíč pro tohoto hráče
+        const klic = "progress_" + user;
+
+        // převedeme objekt na text a uložíme
+        const data = JSON.stringify(progress);
+        localStorage.setItem(klic, data);
+    }
+
+    // ULOŽENÍ VÝHRY - uloží dokončený level
+    function saveWin(levelNumber) {
+        // načteme aktuální postup hráče
+        const progress = getProgress();
+
+        // vytvoříme název klíče pro tento level
+        const nazevLevelu = "level" + levelNumber;
+
+        // označíme level jako dokončený
+        progress[nazevLevelu] = true;
+
+        // uložíme zpět
+        saveProgress(progress);
+
+        // aktualizujeme tlačítka a achievementy
+        if (typeof window.updateLevelButtons === 'function') {
+            window.updateLevelButtons();
+        }
+        if (typeof window.renderAchievements === 'function') {
+            window.renderAchievements();
+        }
+    }
+
+    // JE LEVEL DOKONČEN? - vrátí true nebo false
     function isLevelCompleted(level) {
         const progress = getProgress();
-        return !!progress[`level${level}`];
+        const nazevLevelu = "level" + level;
+        const dokoncen = progress[nazevLevelu];
+
+        if (dokoncen) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
+    // JE LEVEL ODEMČEN? - vrátí true nebo false
     function isLevelUnlocked(level) {
-        if (Number(level) === 1) return true;
+        // level 1 je vždy odemčený
+        if (level === 1) {
+            return true;
+        }
+
+        // načteme postup hráče
         const progress = getProgress();
-        return !!progress[`level${Number(level) - 1}`];
+
+        // zjistíme číslo předchozího levelu
+        const predchoziLevel = level - 1;
+        const nazevPredchoziho = "level" + predchoziLevel;
+
+        // zkontrolujeme jestli byl předchozí level dokončen
+        const predchoziDokoncen = progress[nazevPredchoziho];
+
+        if (predchoziDokoncen) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
+    // TEXT PRO ACHIEVEMENT - vrátí text podle toho jestli je level dokončen
     function achievementText(level, name) {
         const progress = getProgress();
-        return progress[`level${level}`]
-            ? `🏆 ${name} — dokončen`
-            : `🔒 ${name} — nedokončen`;
+        const nazevLevelu = "level" + level;
+        const dokoncen = progress[nazevLevelu];
+
+        if (dokoncen) {
+            return "🏆 " + name + " — dokončen";
+        } else {
+            return "🔒 " + name + " — nedokončen";
+        }
     }
 
+    // VYKRESLENÍ ACHIEVEMENTŮ - zobrazí seznam achievementů
     function renderAchievements() {
         const list = document.getElementById("achievementsList");
-        if (!list) return;
+        if (!list) {
+            return;
+        }
+
+        // vyčistíme seznam
         list.innerHTML = "";
 
+        // názvy achievementů pro každý level
         const names = {
             1: "Rookie — Level 1",
             2: "All-Star — Level 2",
             3: "Legend — Level 3"
         };
 
-        [1,2,3].forEach(level => {
-            const completed = isLevelCompleted(level);
-            const row = document.createElement("div");
-            row.className = "achievement-item";
-            if (completed) row.classList.add("gold");
+        // projdeme všechny levely
+        const levely = [1, 2, 3];
+        for (let i = 0; i < levely.length; i++) {
+            const level = levely[i];
+            const dokoncen = isLevelCompleted(level);
 
-            row.innerHTML = `
-                <span class="emoji">${completed ? "🏆" : "🔒"}</span>
-                <span>${achievementText(level, names[level])}</span>
-            `;
+            // vytvoříme řádek pro tento achievement
+            const radek = document.createElement("div");
+            radek.className = "achievement-item";
 
-            list.appendChild(row);
-        });
+            if (dokoncen) {
+                radek.classList.add("gold");
+            }
+
+            // přidáme obsah řádku
+            if (dokoncen) {
+                radek.innerHTML = "<span>🏆</span><span>" + achievementText(level, names[level]) + "</span>";
+            } else {
+                radek.innerHTML = "<span>🔒</span><span>" + achievementText(level, names[level]) + "</span>";
+            }
+
+            list.appendChild(radek);
+        }
+
+        // zkontrolujeme jestli jsou všechny levely dokončeny
+        const level1Dokoncen = isLevelCompleted(1);
+        const level2Dokoncen = isLevelCompleted(2);
+        const level3Dokoncen = isLevelCompleted(3);
+
+        if (level1Dokoncen && level2Dokoncen && level3Dokoncen) {
+            const bonusRadek = document.createElement("div");
+            bonusRadek.className = "achievement-item gold";
+            bonusRadek.innerHTML = "<span>🎉</span><span>Dokončil jsi všechny tři levely, pojď zkusit multiplayer!</span>";
+            list.appendChild(bonusRadek);
+        }
     }
 
+    // OTEVŘENÍ ACHIEVEMENTŮ - zobrazí popup
     function openAchievements() {
-        if (typeof window !== 'undefined') window.gamePaused = true;
+        window.gamePaused = true;
         const achievementsPopup = document.getElementById("achievementsPopup");
-        if (!achievementsPopup) return;
+        if (!achievementsPopup) {
+            return;
+        }
         achievementsPopup.classList.remove("hidden");
         renderAchievements();
     }
 
+    // ZAVŘENÍ ACHIEVEMENTŮ - skryje popup
     function closeAchievements() {
-        if (typeof window !== 'undefined') window.gamePaused = false;
+        window.gamePaused = false;
         const achievementsPopup = document.getElementById("achievementsPopup");
-        if (!achievementsPopup) return;
+        if (!achievementsPopup) {
+            return;
+        }
         achievementsPopup.classList.add("hidden");
     }
 
+    // AKTUALIZACE TLAČÍTEK LEVELŮ - nastaví správný styl každého tlačítka
     function updateLevelButtons() {
-        document.querySelectorAll(".level-btn").forEach(btn => {
-            const level = Number(btn.dataset.level);
+        const tlacitka = document.querySelectorAll(".level-btn");
 
-            // reset classes
-            btn.classList.remove('locked','unlocked','completed');
+        for (let i = 0; i < tlacitka.length; i++) {
+            const tlacitko = tlacitka[i];
+            const level = Number(tlacitko.dataset.level);
+
+            // nejdřív odebereme všechny třídy
+            tlacitko.classList.remove('locked', 'unlocked', 'completed');
 
             if (isLevelCompleted(level)) {
-                btn.classList.add("completed");
-                btn.disabled = false;
-                btn.textContent = `LEVEL ${level} 🏆`;
-                btn.onclick = () => location.href = `game.html?level=${level}`;
+                // level je dokončen - zlaté tlačítko
+                tlacitko.classList.add("completed");
+                tlacitko.disabled = false;
+                tlacitko.textContent = "LEVEL " + level + " 🏆";
+                tlacitko.onclick = function() {
+                    location.href = "game.html?level=" + level;
+                };
             } else if (isLevelUnlocked(level)) {
-                btn.classList.add("unlocked");
-                btn.disabled = false;
-                btn.textContent = `LEVEL ${level}`;
-                btn.onclick = () => location.href = `game.html?level=${level}`;
+                // level je odemčen - zelené tlačítko
+                tlacitko.classList.add("unlocked");
+                tlacitko.disabled = false;
+                tlacitko.textContent = "LEVEL " + level;
+                tlacitko.onclick = function() {
+                    location.href = "game.html?level=" + level;
+                };
             } else {
-                btn.classList.add("locked");
-                btn.disabled = true;
-                btn.textContent = `LEVEL ${level}`;
-                btn.onclick = () => {};
+                // level je zamčen - šedé tlačítko
+                tlacitko.classList.add("locked");
+                tlacitko.disabled = true;
+                tlacitko.textContent = "LEVEL " + level;
+                tlacitko.onclick = function() {};
             }
-        });
+        }
     }
 
-    // expose functions to global scope so other code can call them
+    // zpřístupníme funkce globálně pro ostatní soubory
     window.register = register;
     window.login = login;
     window.logout = logout;
-    window.hasWon = isLevelCompleted; // back-compat
+    window.hasWon = isLevelCompleted;
     window.isLevelCompleted = isLevelCompleted;
     window.renderAchievements = renderAchievements;
     window.updateLevelButtons = updateLevelButtons;
     window.openAchievements = openAchievements;
     window.closeAchievements = closeAchievements;
+    window.saveWin = saveWin;
 
+    // spustíme při načtení stránky
     showUser();
+    updateLevelButtons();
+
 });

@@ -5,44 +5,65 @@ let selectedCell = null;
 let lastMouse = { x: 0, y: 0 };
 let activeSoldiers = [];
 let snapTarget = null;
-let activeLinks = []; // each link: { from, to, interval }
-let snapRadius = 80; // larger snap area for touchpad responsiveness
+let activeLinks = [];
+let snapRadius = 80;
 
-// Game state
 let gameOver = false;
-let gameResult = null; // "win" | "lose"
-let gamePaused = false; // when true, AI and refill pause, drawing continues
+let gameResult = null;
+let gamePaused = false;
 let gameWon = false;
-let levelWon = false; // guard against double-win triggers
+let levelWon = false;
 
-// ------------------- LEVELS CONFIG -------------------
+// ------------------- KONFIGURACE LEVELŮ -------------------
 const levels = {
     1: {
         cells: [
             { id: 1, x: 100, y: 300, color: "white", lives: 30 },
             { id: 2, x: 500, y: 400, color: "black", lives: 60 },
-            { id: 3, x: 900, y: 100, color: "blue", lives: 20 },
-            { id: 4, x: 400, y: 700, color: "blue", lives: 20 }
+            { id: 3, x: 900, y: 100, color: "blue",  lives: 20 },
+            { id: 4, x: 400, y: 700, color: "blue",  lives: 20 }
         ]
     },
-
     2: {
         cells: [
             { id: 1, x: 100, y: 100, color: "white", lives: 60 },
+            { id: 2, x: 800, y: 300, color: "black", lives: 30 },
+            { id: 3, x: 500, y: 700, color: "black", lives: 30 },
+            { id: 4, x: 300, y: 300, color: "blue",  lives: 20 },
+            { id: 5, x: 600, y: 200, color: "blue",  lives: 20 },
+            { id: 6, x: 800, y: 700, color: "blue",  lives: 20 }
+        ]
+    },
+    // LEVEL 3: stejná struktura jako level 1 a 2.
+    // Hráč (white) má 60 životů jako v levelu 2.
+    // Přidány 2 černé buňky (enemy) a 1 extra bílá buňka — obě se 60 životy jako v levelu 2.
+    // Navíc 3 neutrální modré buňky a celkem 5 nepřátel (3 black).
+    3: {
+        cells: [
+            // --- Hráčovy buňky (bílé) ---
+            { id: 1, x: 100, y: 150, color: "white", lives: 60 }, // hlavní základna
+            { id: 2, x: 200, y: 600, color: "white", lives: 60 }, // druhá bílá buňka (stejně jako v levelu 2)
 
-            { id: 2, x: 800, y: 300, color: "black", lives: 60 },
-            { id: 3, x: 500, y: 700, color: "black", lives: 60 },
+            // --- Nepřátelé (černé) — 2 původní + 2 nové = celkem 4 ---
+            { id: 3, x: 800, y: 150, color: "black", lives: 30 }, // černá 1 (stejně jako level 2)
+            { id: 4, x: 600, y: 550, color: "black", lives: 30 }, // černá 2 (stejně jako level 2)
+            { id: 5, x: 900, y: 500, color: "black", lives: 30 }, // nová černá buňka 1
+            // nová černá buňka 2
 
-            { id: 4, x: 300, y: 300, color: "blue", lives: 20 },
-            { id: 5, x: 600, y: 200, color: "blue", lives: 20 },
-            { id: 6, x: 800, y: 700, color: "blue", lives: 20 }
+            // --- Neutrální (modré) ---
+            { id: 7, x: 400, y: 100, color: "blue",  lives: 20 },
+            { id: 8, x: 500, y: 400, color: "blue",  lives: 20 },
+            { id: 9, x: 300, y: 700, color: "blue",  lives: 20 }
         ]
     }
 };
 
 let currentLevel = 1;
 
-// clear active link intervals and reset list
+/**
+ * clearAllLinks — vymaže všechny aktivní linky (spojení) mezi buňkami.
+ * Zastaví všechny intervaly, aby vojáci přestali automaticky odcházet.
+ */
 function clearAllLinks() {
     for (let link of activeLinks) {
         clearInterval(link.interval);
@@ -50,6 +71,11 @@ function clearAllLinks() {
     activeLinks = [];
 }
 
+/**
+ * loadLevel — načte zadaný level.
+ * Resetuje stav hry, vytvoří buňky podle konfigurace a nastaví výchozí hodnoty.
+ * @param {number} levelNumber - číslo levelu (1, 2 nebo 3)
+ */
 function loadLevel(levelNumber) {
     clearAllLinks();
 
@@ -74,21 +100,45 @@ function loadLevel(levelNumber) {
     gameResult = null;
     gamePaused = false;
     gameWon = false;
-    levelWon = false; // reset guard for new run
+    levelWon = false;
     flakes = [];
 }
 
+/**
+ * showWinNotification — zobrazí overlay s oznámením o výhře.
+ * Pozastaví hru a vypíše číslo dokončeného levelu.
+ */
 function showWinNotification() {
+
+    // najdeme výherní overlay na stránce
     const ov = document.getElementById("winOverlay");
-    if (!ov) return;
-    const msg = ov.querySelector('#winMessage');
-    if (msg) msg.textContent = `Level ${currentLevel} dokončen`;
-    ov.classList.remove('hidden');
-    gamePaused = true;
+
+    // pokud overlay existuje, provedeme vše uvnitř
+    if (ov !== null) {
+
+        // najdeme element kde se zobrazí zpráva o výhře
+        const msg = document.getElementById("winMessage");
+
+        // pokud element existuje, zapíšeme do něj text
+        if (msg !== null) {
+            msg.textContent = "Level " + currentLevel + " dokončen";
+        }
+
+        // zobrazíme overlay odebráním třídy hidden
+        ov.classList.remove("hidden");
+
+        // pozastavíme hru
+        gamePaused = true;
+    }
 }
 
+/**
+ * onLevelWin — zpracuje výhru v levelu.
+ * Nastaví stav výhry, uloží postup a zobrazí výherní overlay.
+ * Ochrana před dvojím spuštěním pomocí příznaku levelWon.
+ */
 function onLevelWin() {
-    if (levelWon) return; // protect from multiple triggers
+    if (levelWon) return;
     levelWon = true;
 
     gameOver = true;
@@ -96,18 +146,22 @@ function onLevelWin() {
     gamePaused = true;
     gameWon = true;
 
-    // persist progress
     saveWin(currentLevel);
-
-    // show overlay
     showWinNotification();
 }
 
+/**
+ * winGame — deleguje výhru na onLevelWin.
+ * Slouží jako veřejné rozhraní pro vyvolání výhry.
+ */
 function winGame() {
-    // delegate to the idempotent onLevelWin handler
     onLevelWin();
 }
 
+/**
+ * loseGame — zpracuje prohru.
+ * Nastaví stav prohry a zobrazí overlay s textem "YOU LOSE".
+ */
 function loseGame() {
     if (gameOver) return;
     gameOver = true;
@@ -116,9 +170,13 @@ function loseGame() {
     showEndOverlay("YOU LOSE", "The enemy took over everything.");
 }
 
-// golden flakes
+// zlaté konfety při výhře
 let flakes = [];
 
+/**
+ * spawnFlake — vytvoří jednu zlatou konfetu na náhodné pozici nahoře.
+ * Každá konfeta má náhodnou rychlost a velikost.
+ */
 function spawnFlake() {
     flakes.push({
         x: Math.random() * canvas.width,
@@ -128,24 +186,43 @@ function spawnFlake() {
     });
 }
 
+/**
+ * saveWin — uloží výhru v daném levelu.
+ * CHEAT: tato funkce je záložní — login.js ji přepíše svojí verzí přes window.saveWin
+ * Pokud je hráč přihlášen, login.js uloží výhru pod "progress_jméno"
+ * Pokud nikdo není přihlášen (nepřihlášený hráč), uloží do obecného "progress"
+ * @param {number} levelNumber - číslo dokončeného levelu
+ */
 function saveWin(levelNumber) {
+    // CHEAT: window.saveWin může být přepsáno login.js = per-user ukládání
+    // pokud login.js není načteno, použije se tato záložní verze
+    if (window.saveWin && window.saveWin !== saveWin) {
+        window.saveWin(levelNumber);
+        return;
+    }
+
+    // CHEAT: záložní verze — ukládá do společného klíče (nepřihlášený hráč)
     const progress = JSON.parse(localStorage.getItem("progress")) || {};
     progress[`level${levelNumber}`] = true;
     localStorage.setItem("progress", JSON.stringify(progress));
 
-    // If index page functions are available (same tab/page), update them
     try {
         if (typeof window.updateLevelButtons === 'function') window.updateLevelButtons();
         if (typeof window.renderAchievements === 'function') window.renderAchievements();
-    } catch (e) {
-        // ignore cross-page or missing functions
-    }
-} 
+    } catch (e) {}
+}
 
+/**
+ * goToFrontPage — přesměruje hráče na hlavní stránku (index.html).
+ */
 function goToFrontPage() {
     location.href = 'index.html';
 }
 
+/**
+ * hideWinPopup — skryje starý výherní popup (legacy).
+ * Obnoví hru a vymaže konfety.
+ */
 function hideWinPopup() {
     const wp = document.getElementById("winPopup");
     if (wp) wp.classList.add("hidden");
@@ -154,17 +231,16 @@ function hideWinPopup() {
     flakes = [];
 }
 
-// clicking the (legacy) win popup hides it and resumes the game
+// kliknutí na starý popup ho skryje
 const winPopupEl = document.getElementById("winPopup");
 if (winPopupEl) {
     winPopupEl.addEventListener('click', hideWinPopup);
 }
 
-// Back to menu button in the new win overlay
+// tlačítko "Zpět do menu" v novém win overlay
 const backToMenuBtn = document.getElementById("backToMenuBtn");
 if (backToMenuBtn) {
     backToMenuBtn.addEventListener('click', () => {
-        // cleanup state
         try { clearAllLinks(); } catch (e) {}
         activeSoldiers = [];
         selectedCell = null;
@@ -178,31 +254,41 @@ if (backToMenuBtn) {
         const ov = document.getElementById("winOverlay");
         if (ov) ov.classList.add("hidden");
 
-        // navigate back to front page
         window.location.href = "index.html";
     });
 }
 
-
+// ------------------- TŘÍDA CELL (BUŇKA) -------------------
 class Cell {
+    /**
+     * constructor — vytvoří novou buňku na zadané pozici.
+     * @param {number} x - pozice X středu buňky
+     * @param {number} y - pozice Y středu buňky
+     * @param {number} radius - poloměr buňky v pixelech
+     * @param {string} color - barva buňky ("white", "black", "blue")
+     * @param {number} owner - vlastník: 0 = neutrální, 1 = hráč, 2 = počítač
+     */
     constructor(x, y, radius, color, owner) {
         this.x = x;
         this.y = y;
         this.radius = radius;
         this.color = color;
-        this.owner = owner; // owners: 0=neutral, 1=player, 2=computer
+        this.owner = owner;
         this.soldiers = 20;
         this.maxSoldiers = 30;
         this.underAttack = false;
     }
 
+    /**
+     * draw — vykreslí buňku na canvas.
+     * Zobrazí kruh v barvě buňky a počet vojáků uvnitř.
+     */
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.fill();
 
-        // Draw soldier count with readable contrast on white cells
         ctx.fillStyle = this.color === "white" ? "black" : "white";
         ctx.font = "16px Arial";
         ctx.textAlign = "center";
@@ -210,7 +296,15 @@ class Cell {
     }
 }
 
-// ------------------- HELPER FUNCTIONS -------------------
+// ------------------- POMOCNÉ FUNKCE -------------------
+
+/**
+ * findClosestCell — najde nejbližší buňku k dané souřadnici.
+ * @param {number} x - souřadnice X
+ * @param {number} y - souřadnice Y
+ * @param {boolean} expandedRadius - pokud true, použije větší oblast detekce (snapRadius)
+ * @returns {Cell|null} nejbližší buňka nebo null
+ */
 function findClosestCell(x, y, expandedRadius = false) {
     let closest = null;
     let closestDist = Infinity;
@@ -227,7 +321,16 @@ function findClosestCell(x, y, expandedRadius = false) {
     return closest;
 }
 
-// Return true if point (x,y) is within `threshold` pixels of the segment from `a` to `b`
+/**
+ * isPointNearLine — zjistí, jestli je bod (x, y) blízko úsečky od a do b.
+ * Používá se pro klikání na linky mezi buňkami.
+ * @param {number} x - souřadnice X bodu
+ * @param {number} y - souřadnice Y bodu
+ * @param {{x,y}} a - začátek úsečky
+ * @param {{x,y}} b - konec úsečky
+ * @param {number} threshold - maximální vzdálenost pro detekci (px)
+ * @returns {boolean}
+ */
 function isPointNearLine(x, y, a, b, threshold = 6) {
     const vx = b.x - a.x;
     const vy = b.y - a.y;
@@ -244,11 +347,14 @@ function isPointNearLine(x, y, a, b, threshold = 6) {
     return dist <= threshold;
 }
 
+/**
+ * sendSoldiers — odešle jednoho vojáka z buňky `from` do buňky `to`.
+ * Pokud zdrojová buňka nemá vojáky, nic neudělá.
+ * @param {Cell} from - zdrojová buňka
+ * @param {Cell} to - cílová buňka
+ */
 function sendSoldiers(from, to) {
-    // Allow sending even with low soldiers - as long as > 0
-    if (from.soldiers <= 0) {
-        return; // silently skip this frame if no soldiers
-    }
+    if (from.soldiers <= 0) return;
 
     from.soldiers -= 1;
 
@@ -261,8 +367,14 @@ function sendSoldiers(from, to) {
     });
 }
 
+/**
+ * startAutoSend — spustí automatické odesílání vojáků z buňky `from` do `to`.
+ * Každých 500 ms odešle jednoho vojáka (pokud hra není pozastavena).
+ * Zabrání duplicitnímu spojení (stejné from → to).
+ * @param {Cell} from - zdrojová buňka
+ * @param {Cell} to - cílová buňka
+ */
 function startAutoSend(from, to) {
-    // block only duplicate SAME connection
     if (activeLinks.some(link => link.from === from && link.to === to)) return;
 
     const interval = setInterval(() => {
@@ -272,6 +384,11 @@ function startAutoSend(from, to) {
     activeLinks.push({ from, to, interval });
 }
 
+/**
+ * stopAutoSendToTarget — zastaví všechny automatické linky směřující do cílové buňky.
+ * Volá se při dobytí buňky, aby se přerušily zastaralé linky.
+ * @param {Cell} target - cílová buňka, ke které se mají přerušit linky
+ */
 function stopAutoSendToTarget(target) {
     activeLinks = activeLinks.filter(link => {
         if (link.to === target) {
@@ -282,11 +399,10 @@ function stopAutoSendToTarget(target) {
     });
 }
 
-// ------------------- CELLS -------------------
+// ------------------- BUŇKY -------------------
 let cells = [];
 
-// By default, load Level 2 (you can call loadLevel(n) to switch)
-// Respect ?level= URL param when present
+// načti level podle URL parametru ?level=, jinak defaultně level 2
 try {
     const urlParams = new URLSearchParams(window.location.search);
     const levelParam = parseInt(urlParams.get('level'), 10);
@@ -296,7 +412,12 @@ try {
     loadLevel(2);
 }
 
-// ------------------- MOUSE EVENTS -------------------
+// ------------------- UDÁLOSTI MYŠI -------------------
+
+/**
+ * mousemove — sleduje pohyb myši a aktualizuje snap cíl.
+ * Pokud je vybrána buňka, hledá nejbližší buňku pro přichycení linie.
+ */
 canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect();
     lastMouse.x = e.clientX - rect.left;
@@ -309,13 +430,15 @@ canvas.addEventListener("mousemove", (e) => {
     }
 }, { passive: true });
 
-// pointerdown for better touch/touchpad support (uses expanded radius)
+/**
+ * pointerdown — zpracuje kliknutí/dotyk na canvas.
+ * Přepíná linky mezi buňkami nebo vybírá hráčovu buňku.
+ */
 canvas.addEventListener('pointerdown', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // If user clicked near an active link, toggle that link off
     const clickedLink = activeLinks.find(link => isPointNearLine(x, y, link.from, link.to, 8));
     if (clickedLink) {
         clearInterval(clickedLink.interval);
@@ -324,7 +447,6 @@ canvas.addEventListener('pointerdown', (e) => {
     }
 
     if (selectedCell && snapTarget) {
-        // toggle: if link exists, stop it; otherwise start it
         const existing = activeLinks.find(l => l.from === selectedCell && l.to === snapTarget);
         if (existing) {
             clearInterval(existing.interval);
@@ -339,20 +461,21 @@ canvas.addEventListener('pointerdown', (e) => {
     const c = findClosestCell(x, y, true);
 
     if (!c) {
-        // clicked empty space → cancel selection and line
         selectedCell = null;
         snapTarget = null;
         return;
     }
 
-    // allow selecting ONLY player cell
     if (c.owner === 1) {
         selectedCell = selectedCell === c ? null : c;
     }
 }, { passive: true });
 
+/**
+ * click — zpracuje kliknutí myší (záložní handler vedle pointerdown).
+ * Logika je stejná jako u pointerdown.
+ */
 canvas.addEventListener("click", () => {
-    // If user clicked near an active link, toggle it off
     const clickedLink = activeLinks.find(link => isPointNearLine(lastMouse.x, lastMouse.y, link.from, link.to, 8));
     if (clickedLink) {
         clearInterval(clickedLink.interval);
@@ -361,7 +484,6 @@ canvas.addEventListener("click", () => {
     }
 
     if (selectedCell && snapTarget) {
-        // toggle on click: stop existing link if present, otherwise start
         const existing = activeLinks.find(l => l.from === selectedCell && l.to === snapTarget);
         if (existing) {
             clearInterval(existing.interval);
@@ -373,25 +495,29 @@ canvas.addEventListener("click", () => {
         return;
     }
 
-    // Use expanded detection radius for clicks so the whole cell area is clickable
     const c = findClosestCell(lastMouse.x, lastMouse.y, true);
 
     if (!c) {
-        // clicked empty space → cancel selection and line
         selectedCell = null;
         snapTarget = null;
         return;
     }
 
-    // allow selecting ONLY player cell
     if (c.owner === 1) {
         selectedCell = selectedCell === c ? null : c;
     }
 });
 
-// ------------------- SOLDIER MOVEMENT -------------------
+// ------------------- POHYB VOJÁKŮ -------------------
+
+/**
+ * updateSoldiers — pohybuje vojáky směrem k cíli a vyřeší útok nebo posilu.
+ * Pokud voják dosáhne cíle:
+ *   - stejný vlastník → posílí buňku
+ *   - jiný vlastník  → sníží počet vojáků, při 0 dobyde buňku
+ */
 function updateSoldiers() {
-    for (let s of [...activeSoldiers]) { // clone to allow splice
+    for (let s of [...activeSoldiers]) {
         const dx = s.target.x - s.x;
         const dy = s.target.y - s.y;
         const dist = Math.hypot(dx, dy);
@@ -405,18 +531,15 @@ function updateSoldiers() {
                 s.target.underAttack = true;
                 s.target.soldiers--;
                 if (s.target.soldiers <= 0) {
-                    // Capture the cell
                     s.target.owner = s.owner;
-                    if (s.target.owner === 1) s.target.color = "white";
+                    if (s.target.owner === 1)      s.target.color = "white";
                     else if (s.target.owner === 2) s.target.color = "black";
-                    else s.target.color = "blue";
+                    else                           s.target.color = "blue";
 
                     s.target.soldiers = 5;
                     s.target.underAttack = false;
 
-                    // ----------------------------
-                    // DETACH LINES CONNECTED TO THIS CELL
-                    // remove links where this cell is the source or the target
+                    // přeruš linky spojené s dobytou buňkou
                     activeLinks = activeLinks.filter(link => {
                         if (link.from === s.target || link.to === s.target) {
                             clearInterval(link.interval);
@@ -424,7 +547,6 @@ function updateSoldiers() {
                         }
                         return true;
                     });
-                    // ----------------------------
                 }
             }
             activeSoldiers.splice(activeSoldiers.indexOf(s), 1);
@@ -441,25 +563,31 @@ function updateSoldiers() {
     }
 }
 
-// ------------------- CELL REFILL (WITH RECOVERY FROM ZERO) -------------------
+// ------------------- REGENERACE VOJÁKŮ -------------------
+/**
+ * Interval regenerace — každých 800 ms doplní vojáky v buňkách, které nejsou napadeny.
+ * Pozastaví se při gamePaused nebo gameOver.
+ */
 setInterval(() => {
     if (gamePaused || gameOver) return;
 
     for (let c of cells) {
         if (!c.underAttack && c.soldiers < c.maxSoldiers) {
-            c.soldiers += 1; // slow regeneration
+            c.soldiers += 1;
         }
-
-        // reset underAttack flag every tick
         c.underAttack = false;
     }
-}, 800); // slower = more strategic
+}, 800);
 
-// ------------------- COMPUTER AI (MULTI-CELL) -------------------
+// ------------------- AI POČÍTAČE -------------------
+/**
+ * Interval AI — každých 800 ms pošle vojáky z černých buněk na náhodný cíl.
+ * Útočí jen buňky s více než 5 vojáky.
+ * Pozastaví se při gamePaused nebo gameOver.
+ */
 setInterval(() => {
     if (gamePaused || gameOver) return;
 
-    // all black cells with enough soldiers will attack
     const enemies = cells.filter(c => c.owner === 2 && c.soldiers > 5);
     const targets = cells.filter(c => c.owner !== 2);
     if (targets.length === 0 || enemies.length === 0) return;
@@ -470,7 +598,13 @@ setInterval(() => {
     }
 }, 800);
 
-// ------------------- GAME END CHECKS -------------------
+// ------------------- KONTROLA KONCE HRY -------------------
+
+/**
+ * checkGameEnd — zkontroluje, jestli hra skončila výhrou nebo prohrou.
+ * Výhra: všechny buňky jsou bílé (hráčovy).
+ * Prohra: hráč nemá žádnou bílou buňku.
+ */
 function checkGameEnd() {
     if (gameOver) return;
 
@@ -481,6 +615,11 @@ function checkGameEnd() {
     if (!hasBlack && cells.every(c => c.color === "white")) winGame();
 }
 
+/**
+ * showEndOverlay — zobrazí overlay s výsledkem hry (výhra/prohra).
+ * @param {string} title - nadpis (např. "YOU LOSE")
+ * @param {string} text - doplňující text pod nadpisem
+ */
 function showEndOverlay(title, text) {
     const overlay = document.getElementById("endOverlay");
     const titleEl = document.getElementById("endTitle");
@@ -494,27 +633,36 @@ function showEndOverlay(title, text) {
     overlay.classList.remove("hidden");
 }
 
-// Rules overlay controls
+// ------------------- PRAVIDLA -------------------
 const rulesButton = document.getElementById("rulesButton");
 const rulesOverlay = document.getElementById("rulesOverlay");
 
 if (rulesButton && rulesOverlay) {
     rulesButton.addEventListener("click", () => {
         rulesOverlay.classList.remove("hidden");
-        gamePaused = true; // freeze game while rules are open
+        gamePaused = true;
     });
-} 
+}
 
+/**
+ * closeRules — zavře overlay s pravidly a obnoví hru.
+ */
 function closeRules() {
     if (rulesOverlay) rulesOverlay.classList.add("hidden");
-    gamePaused = false; // resume game on close
-} 
+    gamePaused = false;
+}
 
-// ------------------- DRAW LOOP -------------------
+// ------------------- HLAVNÍ SMYČKA KRESLENÍ -------------------
+
+/**
+ * draw — hlavní vykreslovací smyčka (requestAnimationFrame).
+ * Vykresluje linky, náhled linie, buňky, vojáky, konfety.
+ * Volá updateSoldiers a checkGameEnd při aktivní hře.
+ */
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // draw active links
+    // aktivní linky (bílé čáry)
     for (let link of activeLinks) {
         ctx.beginPath();
         ctx.moveTo(link.from.x, link.from.y);
@@ -524,7 +672,7 @@ function draw() {
         ctx.stroke();
     }
 
-    // draw preview line
+    // náhled čáry při výběru buňky
     if (selectedCell) {
         ctx.beginPath();
         ctx.moveTo(selectedCell.x, selectedCell.y);
@@ -542,7 +690,7 @@ function draw() {
         checkGameEnd();
     }
 
-    // GOLDEN FLAKES WHEN WON
+    // zlaté konfety při výhře
     if (gameWon) {
         if (Math.random() < 0.3) spawnFlake();
 

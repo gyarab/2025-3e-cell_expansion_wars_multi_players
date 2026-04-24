@@ -2,48 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- CHEAT: viewport = stránka se přizpůsobí mobilním obrazovkám -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brain Cell Wars – Level 1</title>
+    <!-- CHEAT: stejný CSS soubor pro celou hru, jeden soubor = méně práce -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- CHEAT: canvas = plocha pro kreslení hry pomocí JavaScriptu (ctx v main.js) -->
+    <!-- width/height v pixelech = rozlišení plátna, neshoduje se nutně s CSS velikostí -->
     <canvas id="gameCanvas" width="1000" height="750"></canvas>
 
-    <!-- Game end overlay (hidden by default) -->
+    <!-- CHEAT: endOverlay = zobrazí se při výhře/prohře přes celou obrazovku -->
+    <!-- class="hidden" = skryté na začátku, JS ho odkryje přes classList.remove("hidden") -->
     <div id="endOverlay" class="hidden">
         <div class="endBox">
+            <!-- CHEAT: id="endTitle" a id="endText" = JS sem zapíše výsledek hry -->
             <h1 id="endTitle"></h1>
             <p id="endText"></p>
+            <!-- CHEAT: přesměruje zpět na hlavní stránku -->
             <button onclick="location.href='index.html'">Back to Menu</button>
         </div>
     </div>
 
-    <!-- Rules Button -->
+    <!-- CHEAT: rulesButton = fixně v pravém dolním rohu (position:fixed v CSS) -->
+    <!-- kliknutí zavolá addEventListener v main.js, který zobrazí rulesOverlay -->
     <button id="rulesButton">Pravidla</button>
 
-    <!-- Rules Overlay -->
+    <!-- CHEAT: rulesOverlay = překryje celou hru s pravidly, hra se pozastaví -->
     <div id="rulesOverlay" class="hidden">
         <div class="rulesBox">
             <h2>Pravidla hry</h2>
             <ul>
+                <!-- CHEAT: každé li = jedno pravidlo, lze přidávat/odebírat volně -->
                 <li>Bílá buňka je vaše a můžete ji ovládat.</li>
                 <li>Černá buňka je nepřítel a útočí na ostatní buňky automaticky.</li>
                 <li>Modré buňky jsou neutrální a můžete je dobýt.</li>
                 <li>Buňky mohou postupně obnovovat vojáky, pokud nejsou napadeny.</li>
                 <li>Cílem je převzít všechny buňky (vítězství) nebo zabránit nepříteli převzít vaše (prohra).</li>
             </ul>
+            <!-- CHEAT: closeRules() je definována v main.js, schová overlay a obnoví hru -->
             <button onclick="closeRules()">Zavřít</button>
         </div>
     </div>
 
+    <!-- CHEAT: winOverlay = zobrazí se při výhře, jiný styl než endOverlay (zlatý rámeček) -->
+    <!-- třída "overlay" = position:fixed přes celou obrazovku (v CSS) -->
     <div id="winOverlay" class="overlay hidden">
         <div class="overlay-box win">
             <h2>🎉 Výhra!</h2>
+            <!-- CHEAT: winMessage = JS sem zapíše "Level X dokončen" -->
             <p id="winMessage">Level dokončen</p>
+            <!-- CHEAT: backToMenuBtn má addEventListener v main.js, vyčistí stav a přesměruje -->
             <button id="backToMenuBtn">Zpět do menu</button>
         </div>
     </div>
 
+    <script src="login.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

@@ -1,35 +1,39 @@
-/* -------- GLOBAL RESET -------- */
+/* CHEAT: * = vybere VŠECHNY elementy na stránce */
+/* box-sizing: border-box = padding a border se počítají DO šířky, ne navíc */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* CHEAT: html, body = základní nastavení celé stránky */
+/* overflow-x: hidden = zakáže horizontální scrollování */
 html, body {
     width: 100%;
     height: 100%;
     background: #111;
     overflow-x: hidden;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: Arial, Helvetica, sans-serif; /* CHEAT: záložní fonty odděleny čárkou */
 }
 
-/* 🌟 Page scrolling behavior (smooth) */
+/* CHEAT: scroll-behavior: smooth = plynulé scrollování při kliknutí na #odkaz */
 html {
     scroll-behavior: smooth;
 }
 
-/* -------- SCROLL SECTIONS -------- */
+/* CHEAT: section = každá sekce zabere celou výšku obrazovky */
+/* flexbox = zarovná obsah doprostřed vodorovně i svisle */
 section {
     width: 100%;
-    min-height: 100vh;
-    background: #111; /* SAME BLACK EVERYWHERE */
+    min-height: 100vh; /* CHEAT: 100vh = 100% výšky okna prohlížeče */
+    background: #111;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;    /* CHEAT: column = elementy pod sebou */
+    align-items: center;       /* CHEAT: zarovná vodorovně na střed */
+    justify-content: center;   /* CHEAT: zarovná svisle na střed */
 }
 
-/* 🏆 Hero Section */
+/* CHEAT: třídy začínající tečkou = class selektory */
 .hero-section {
     background: #111;
     color: white;
@@ -40,34 +44,33 @@ section {
     font-size: 64px;
     font-weight: bold;
     color: white;
-    margin-bottom: 20px;
+    margin-bottom: 20px; /* CHEAT: margin = vnější mezera, padding = vnitřní mezera */
 }
 
 .intro-text {
     font-size: 24px;
     color: #ddd;
-    max-width: 720px;
+    max-width: 720px; /* CHEAT: max-width = text se nezalamuje příliš široce */
     text-align: center;
     margin-bottom: 40px;
-    line-height: 1.5;
+    line-height: 1.5; /* CHEAT: 1.5 = řádkování 150% velikosti fontu */
 }
 
-/* 👇 Scroll Down arrow */
+/* CHEAT: animation = animace definovaná pomocí @keyframes níže */
 .scroll-down {
     margin-top: 50px;
     font-size: 32px;
     color: white;
     text-decoration: none;
-    animation: bounce 2s infinite;
+    animation: bounce 2s infinite; /* CHEAT: infinite = opakuje se donekonečna */
 }
 
-/* Basic bouncing animation */
+/* CHEAT: @keyframes = definuje animaci, 0% = začátek, 100% = konec */
 @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    0%, 100% { transform: translateY(0); }    /* CHEAT: translateY = pohyb po ose Y */
+    50% { transform: translateY(-10px); }      /* CHEAT: záporná Y = nahoru */
 }
 
-/* 🕹 Levels Section */
 .levels-section {
     color: white;
 }
@@ -78,28 +81,31 @@ section {
     margin-bottom: 30px;
 }
 
+/* CHEAT: .level-buttons button = vybere VŠECHNA tlačítka uvnitř .level-buttons */
 .level-buttons button {
-    padding: 20px 40px;
+    padding: 20px 40px; /* CHEAT: padding: svisle vodorovně */
     font-size: 20px;
-    border-radius: 40px;
+    border-radius: 40px; /* CHEAT: border-radius = zaoblené rohy, 50% = kruh */
     border: none;
-    cursor: pointer;
+    cursor: pointer; /* CHEAT: cursor: pointer = ukazatel myši se změní na ručičku */
     background: white;
     color: #000000;
-    transition: 0.2s ease;
+    transition: 0.2s ease; /* CHEAT: transition = plynulá změna při hoveru */
 }
 
+/* CHEAT: :hover = styl při najetí myší, :not(:disabled) = jen pokud není disabled */
 .level-buttons button:hover:not(:disabled) {
-    background: #4285f4; /* Google blue */
+    background: #4285f4;
     color: white;
 }
 
+/* CHEAT: :disabled = styl pro zakázané tlačítko */
 .level-buttons button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    opacity: 0.4;        /* CHEAT: opacity = průhlednost 0-1 */
+    cursor: not-allowed; /* CHEAT: zobrazí zakázaný kurzor */
 }
 
-/* Level button states */
+/* CHEAT: .level-btn.locked = element musí mít OBĚ třídy zároveň */
 .level-btn.locked {
     background: #444;
     opacity: 0.8;
@@ -108,19 +114,20 @@ section {
 }
 
 .level-btn.unlocked {
-    background: #1f8f3a; /* green */
+    background: #1f8f3a;
     color: white;
 }
 
+/* CHEAT: linear-gradient = přechod mezi barvami */
+/* box-shadow = stín, rgba = barva s průhledností */
 .level-btn.completed {
     background: linear-gradient(45deg, gold, #ffd700);
     color: black;
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
 }
 
-/* -------- MULTIPLAYER BUTTON -------- */
 .multiplayer-button {
-    margin-top: 110px; /* ≈ 3 cm */
+    margin-top: 110px;
     display: flex;
     justify-content: center;
 }
@@ -137,7 +144,7 @@ section {
 }
 
 .multiplayer-button button:hover:not(:disabled) {
-    background: #34a853; /* Google green accent */
+    background: #34a853;
     color: white;
 }
 
@@ -146,37 +153,31 @@ section {
     cursor: not-allowed;
 }
 
-/* -------- MULTIPLAYER PULSE + GLOW -------- */
+/* CHEAT: :not(:disabled) = animace jen na aktivním tlačítku */
 .multiplayer-button button:not(:disabled) {
     animation: pulseGlow 2s infinite;
 }
 
+/* CHEAT: transform: scale = zvětší element, box-shadow = záře kolem */
 @keyframes pulseGlow {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 0 0 rgba(52, 168, 83, 0.0);
-    }
-    50% {
-        transform: scale(1.05);
-        box-shadow: 0 0 25px rgba(52, 168, 83, 0.6);
-    }
-    100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 rgba(52, 168, 83, 0.0);
-    }
+    0%   { transform: scale(1);    box-shadow: 0 0 0 rgba(52, 168, 83, 0.0); }
+    50%  { transform: scale(1.05); box-shadow: 0 0 25px rgba(52, 168, 83, 0.6); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 rgba(52, 168, 83, 0.0); }
 }
 
-/* -------- GAME END OVERLAY -------- */
+/* CHEAT: position: fixed = element zůstane na místě i při scrollování */
+/* inset: 0 = top:0, right:0, bottom:0, left:0 = roztáhne na celou obrazovku */
 #endOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.85); /* CHEAT: rgba = černá s 85% neprůhledností */
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 999;
+    z-index: 999; /* CHEAT: z-index = vrstva, vyšší = nad ostatními elementy */
 }
 
+/* CHEAT: .hidden třída = skryje element, JS ji přidává/odebírá */
 #endOverlay.hidden {
     display: none;
 }
@@ -190,17 +191,8 @@ section {
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
 }
 
-/* WIN / LOSE styles */
-.endBox h1 {
-    font-size: 48px;
-    margin-bottom: 20px;
-}
-
-.endBox p {
-    font-size: 20px;
-    margin-bottom: 30px;
-    color: #ccc;
-}
+.endBox h1 { font-size: 48px; margin-bottom: 20px; }
+.endBox p  { font-size: 20px; margin-bottom: 30px; color: #ccc; }
 
 .endBox button {
     padding: 14px 30px;
@@ -217,7 +209,7 @@ section {
     color: white;
 }
 
-/* -------- RULES BUTTON -------- */
+/* CHEAT: position: fixed = tlačítko pravidel vždy v pravém dolním rohu */
 #rulesButton {
     position: fixed;
     bottom: 20px;
@@ -229,7 +221,7 @@ section {
     background: #fff;
     color: #111;
     cursor: pointer;
-    z-index: 1000;
+    z-index: 1000; /* CHEAT: 1000 = nad endOverlay (999) */
     transition: 0.2s ease;
 }
 
@@ -238,7 +230,6 @@ section {
     color: white;
 }
 
-/* -------- RULES OVERLAY -------- */
 #rulesOverlay {
     position: fixed;
     inset: 0;
@@ -246,12 +237,10 @@ section {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1001;
+    z-index: 1001; /* CHEAT: 1001 = nad rulesButton (1000) */
 }
 
-#rulesOverlay.hidden {
-    display: none;
-}
+#rulesOverlay.hidden { display: none; }
 
 .rulesBox {
     background: #111;
@@ -263,50 +252,27 @@ section {
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
 }
 
-.rulesBox h2 {
-    font-size: 32px;
-    margin-bottom: 20px;
-    text-align: center;
-}
+.rulesBox h2     { font-size: 32px; margin-bottom: 20px; text-align: center; }
+.rulesBox ul     { font-size: 18px; line-height: 1.6; margin-bottom: 30px; }
+.rulesBox button { display: block; margin: 0 auto; padding: 12px 25px; font-size: 16px; border-radius: 30px; border: none; background: #fff; color: #111; cursor: pointer; }
+.rulesBox button:hover { background: #4285f4; color: white; }
 
-.rulesBox ul {
-    font-size: 18px;
-    line-height: 1.6;
-    margin-bottom: 30px;
-}
-
-.rulesBox button {
-    display: block;
-    margin: 0 auto;
-    padding: 12px 25px;
-    font-size: 16px;
-    border-radius: 30px;
-    border: none;
-    background: #fff;
-    color: #111;
-    cursor: pointer;
-}
-
-.rulesBox button:hover {
-    background: #4285f4;
-    color: white;
-}
-
-/* -------- LOGIN BOX -------- */
+/* CHEAT: #loginBox = id selektor (mřížka), vybere element s id="loginBox" */
 #loginBox {
-    position: fixed;
+    position: fixed; /* CHEAT: fixně v rohu i při scrollování */
     top: 20px;
     right: 20px;
     background: #000;
     border: 1px solid #333;
     padding: 16px;
-    border-radius: 16px; /* 🔵 rounded */
+    border-radius: 16px;
     width: 220px;
     font-family: Arial, sans-serif;
     color: white;
     box-shadow: 0 0 20px rgba(255,255,255,0.05);
 }
 
+/* CHEAT: width: 100% = input zabere celou šířku rodiče (#loginBox) */
 #loginBox input {
     width: 100%;
     margin-bottom: 8px;
@@ -314,6 +280,7 @@ section {
     background: #111;
     border: 1px solid #333;
     color: white;
+    border-radius: 8px;
 }
 
 #loginBox button {
@@ -324,56 +291,32 @@ section {
     color: black;
     border: none;
     cursor: pointer;
-}
-
-#loginBox input,
-#loginBox button {
     border-radius: 8px;
 }
 
-#loginBox button:hover {
-    background: #ddd;
-}
+#loginBox button:hover { background: #ddd; }
 
-#loginMessage {
-    font-size: 12px;
-    color: #f55;
-    margin-top: 6px;
-}
+#loginMessage { font-size: 12px; color: #f55; margin-top: 6px; }
 
-.hidden {
-    display: none;
-}
-
-/* -------- ACHIEVEMENTS / LEVEL HIGHLIGHT -------- */
-.level-button.completed {
-    background: linear-gradient(45deg, gold, #ffd700);
-    color: black;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-}
-
-.achievements {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-}
+/* CHEAT: .hidden = univerzální třída pro skrytí elementu */
+/* JS přidává/odebírá tuto třídu místo přímé změny display */
+.hidden { display: none; }
 
 .achievements-btn {
     position: fixed;
     top: 20px;
     left: 20px;
-
-    width: 260px;          /* bigger */
-    height: 80px;          /* bigger */
+    width: 260px;
+    height: 80px;
     font-size: 20px;
-
     border-radius: 30px;
     background: #111;
     color: white;
-
     box-shadow: 0 0 20px rgba(255,255,255,0.08);
 }
 
+/* CHEAT: .achievement-item = jeden řádek v seznamu achievementů */
+/* display: flex + gap = flexbox s mezerou mezi ikonou a textem */
 .achievement-item {
     background: #111;
     border-radius: 12px;
@@ -385,11 +328,14 @@ section {
     gap: 12px;
 }
 
+/* CHEAT: .achievement-item.gold = zlatý styl pro splněné achievementy */
 .achievement-item.gold {
     background: linear-gradient(135deg, #d4af37, #ffd700);
     color: black;
 }
 
+/* CHEAT: .notification = popup uprostřed obrazovky */
+/* transform: translate(-50%, -50%) + top/left: 50% = perfektní vycentrování */
 .notification {
     position: fixed;
     top: 50%;
@@ -400,27 +346,13 @@ section {
     border-radius: 16px;
     padding: 20px 30px;
     color: white;
-    z-index: 9999;
+    z-index: 9999; /* CHEAT: 9999 = úplně navrchu nad vším */
     min-width: 300px;
     text-align: center;
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
 }
 
-.notification button {
-    margin-top: 15px;
-    padding: 8px 16px;
-    border-radius: 10px;
-    background: white;
-    color: black;
-    border: none;
-    cursor: pointer;
-}
-
-.notification button:hover {
-    background: #ddd;
-}
-
-/* overlay + content (simple reuse of rules styling) */
+/* CHEAT: .overlay = stejné jako endOverlay ale jako obecná třída */
 .overlay {
     position: fixed;
     inset: 0;
@@ -431,21 +363,9 @@ section {
     z-index: 1001;
 }
 
-.overlay.hidden {
-    display: none;
-}
+.overlay.hidden { display: none; }
 
-.overlayContent {
-    background: #111;
-    color: white;
-    border-radius: 16px;
-    padding: 40px 60px;
-    max-width: 600px;
-    text-align: left;
-    box-shadow: 0 0 30px rgba(0,0,0,0.8);
-}
-
-/* Win Overlay box */
+/* CHEAT: .overlay-box = obsah uvnitř overlay (bílý rámeček na tmavém pozadí) */
 .overlay-box {
     background: #111;
     border-radius: 16px;
@@ -455,9 +375,8 @@ section {
     min-width: 300px;
 }
 
-.overlay-box.win {
-    border: 2px solid gold;
-}
+/* CHEAT: .overlay-box.win = zlatý rámeček pro výherní overlay */
+.overlay-box.win { border: 2px solid gold; }
 
 .overlay-box button {
     margin-top: 20px;
@@ -470,28 +389,21 @@ section {
     cursor: pointer;
 }
 
-.overlay-box button:hover {
-    background: gold;
-}
+.overlay-box button:hover { background: gold; }
 
-/* -------- WIN POPUP + FLAKES -------- */
+/* CHEAT: .popup = fullscreen overlay pro win popup (starší verze) */
 .popup {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.85);
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     z-index: 9999;
 }
 
-.popup.hidden {
-    display: none;
-}
+.popup.hidden { display: none; }
 
-/* center and style popup button */
 .popup button {
     padding: 12px 24px;
     font-size: 18px;
