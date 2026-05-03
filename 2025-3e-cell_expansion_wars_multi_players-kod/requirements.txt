@@ -1,0 +1,4 @@
+django
+pyaml
+chanels[daphne]
+channels_redis

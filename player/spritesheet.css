@@ -1,0 +1,72 @@
+.sprite {
+  display: inline-block;
+  background: url('spritesheet.png') no-repeat;
+  width: 256px;
+  height: 256px;
+}
+.sprite-0 { background-position: -0px -0px; }
+.sprite-1 { background-position: -256px -0px; }
+.sprite-2 { background-position: -512px -0px; }
+.sprite-3 { background-position: -768px -0px; }
+.sprite-4 { background-position: -0px -256px; }
+.sprite-5 { background-position: -256px -256px; }
+.sprite-6 { background-position: -512px -256px; }
+.sprite-7 { background-position: -768px -256px; }
+.sprite-8 { background-position: -0px -512px; }
+.sprite-9 { background-position: -256px -512px; }
+.sprite-10 { background-position: -512px -512px; }
+.sprite-11 { background-position: -768px -512px; }
+.sprite-12 { background-position: -0px -768px; }
+.sprite-13 { background-position: -256px -768px; }
+.sprite-14 { background-position: -512px -768px; }
+.sprite-15 { background-position: -768px -768px; }
+.sprite-16 { background-position: -0px -1024px; }
+.sprite-17 { background-position: -256px -1024px; }
+.sprite-18 { background-position: -512px -1024px; }
+.sprite-19 { background-position: -768px -1024px; }
+.sprite-20 { background-position: -0px -1280px; }
+.sprite-21 { background-position: -256px -1280px; }
+.sprite-22 { background-position: -512px -1280px; }
+.sprite-23 { background-position: -768px -1280px; }
+.sprite-24 { background-position: -0px -1536px; }
+.sprite-25 { background-position: -256px -1536px; }
+.sprite-26 { background-position: -512px -1536px; }
+.sprite-27 { background-position: -768px -1536px; }
+.sprite-28 { background-position: -0px -1792px; }
+.sprite-29 { background-position: -256px -1792px; }
+.sprite-30 { background-position: -512px -1792px; }
+.sprite-31 { background-position: -768px -1792px; }
+.sprite-32 { background-position: -0px -2048px; }
+.sprite-33 { background-position: -256px -2048px; }
+.sprite-34 { background-position: -512px -2048px; }
+.sprite-35 { background-position: -768px -2048px; }
+.sprite-36 { background-position: -0px -2304px; }
+.sprite-37 { background-position: -256px -2304px; }
+.sprite-38 { background-position: -512px -2304px; }
+.sprite-39 { background-position: -768px -2304px; }
+.sprite-40 { background-position: -0px -2560px; }
+.sprite-41 { background-position: -256px -2560px; }
+.sprite-42 { background-position: -512px -2560px; }
+.sprite-43 { background-position: -768px -2560px; }
+.sprite-44 { background-position: -0px -2816px; }
+.sprite-45 { background-position: -256px -2816px; }
+.sprite-46 { background-position: -512px -2816px; }
+.sprite-47 { background-position: -768px -2816px; }
+.sprite-48 { background-position: -0px -3072px; }
+.sprite-49 { background-position: -256px -3072px; }
+.sprite-50 { background-position: -512px -3072px; }
+.sprite-51 { background-position: -768px -3072px; }
+.sprite-52 { background-position: -0px -3328px; }
+.sprite-53 { background-position: -256px -3328px; }
+.sprite-54 { background-position: -512px -3328px; }
+.sprite-55 { background-position: -768px -3328px; }
+.sprite-56 { background-position: -0px -3584px; }
+.sprite-57 { background-position: -256px -3584px; }
+.sprite-58 { background-position: -512px -3584px; }
+.sprite-59 { background-position: -768px -3584px; }
+.sprite-60 { background-position: -0px -3840px; }
+.sprite-61 { background-position: -256px -3840px; }
+.sprite-62 { background-position: -512px -3840px; }
+.sprite-63 { background-position: -768px -3840px; }
+.sprite-64 { background-position: -0px -4096px; }
+.sprite-65 { background-position: -256px -4096px; }

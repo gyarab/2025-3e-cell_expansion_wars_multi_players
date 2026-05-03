@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div id="loginBox">
+{% if whole_user_name != None %}
+    <div id="userPanel">
+        <span id="welcomeText">Hello, {{ whole_user_name }}</span>
+        <button onclick="logout()">Logout</button>
+    </div>
+{% else %}
+    <div id="loginForm">
+        <input type="text" id="username" placeholder="Name">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <button onclick="register()">Register</button>
+        <p id="loginMessage"></p>
+    </div>
+{% endif %}
+</div>
+
+    <!-- 🌟 Section 1: Hero / Title -->
+    <section class="hero-section" id="hero">
+        <h1 class="title">Brain Cell Wars</h1>
+        <p class="intro-text">
+            Čau lidi! Vítejte ve hře Brain Cell Wars, kde budete bránit své mozkové buňky před invazí škodlivých virů a bakterií.
+        </p>
+        <a href="#levels" class="scroll-down">&#8595; Scroll Down</a>
+    </section>
+
+    <!-- 🎮 Section 2: Level Buttons -->
+    <section class="levels-section" id="levels">
+        <h2>Můžete zkusit náš level:</h2>
+
+        <div class="level-buttons">
+            {% for id, name, enabled in levels %}
+            <button {% if enabled %}class="level-button level-btn" data-level="{{ id }}"{% else %}disabled{% endif %}>{{ name }}</button>
+            {% endfor %}
+        </div>
+
+        <!-- Multiplayer button -->
+        <div class="multiplayer-button">
+            {% for id, name, enabled in presets %}
+            <button {% if enabled %}class="level-button preset-btn" data-preset="{{ id }}"{% else %}disabled{% endif %}>{{ name }}</button>
+            {% endfor %}
+            <button class="level-button preset-btn" data-preset="+">CUSTOM CONFIGURATION</button>
+        </div>
+    </section>
+
+<button id="achievementsBtn" class="level-button achievements-btn">🏆 ACHIEVEMENTS</button>
+
+<div id="achievementsPopup" class="notification hidden">
+    <h2>Úspěchy</h2>
+    <div id="achievementsList"></div>
+    <button id="achCloseBtn">Zavřít</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Ensure buttons reflect current progress and lock/unlock rules
+    if (typeof updateLevelButtons === 'function') updateLevelButtons();
+
+    const achievementsBtn = document.getElementById("achievementsBtn");
+    const achievementsPopup = document.getElementById("achievementsPopup");
+    const achCloseBtn = document.getElementById("achCloseBtn");
+
+    if (achievementsBtn) {
+        achievementsBtn.addEventListener("click", () => {
+            if (typeof openAchievements === 'function') openAchievements();
+            else {
+                window.gamePaused = true;
+                if (achievementsPopup) achievementsPopup.classList.remove("hidden");
+                if (typeof renderAchievements === 'function') renderAchievements();
+            }
+        });
+    }
+
+    if (achCloseBtn) {
+        achCloseBtn.addEventListener("click", () => {
+            if (typeof closeAchievements === 'function') closeAchievements();
+            else if (achievementsPopup) achievementsPopup.classList.add("hidden");
+        });
+    }
+});
+</script>
+
+{% endblock %}

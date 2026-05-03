@@ -16,7 +16,8 @@
     <div id="loginForm">
         <!-- CHEAT: type="password" = skryje znaky při psaní hesla -->
         <input type="text" id="username" placeholder="Name">
-        <input type="password" id="password" placeholder="Password">
+        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+
         <!-- CHEAT: onclick="login()" zavolá funkci login() z login.js -->
         <button onclick="login()">Login</button>
         <button onclick="register()">Register</button>
