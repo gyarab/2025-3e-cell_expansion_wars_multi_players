@@ -1,5 +1,4 @@
-// ------------------- MULTIPLAYER WEBSOCKET -------------------
-// Tento soubor zajišťuje připojení frontendu na backend přes WebSocket
+
 
 let socket = null;
 let gameId = null;

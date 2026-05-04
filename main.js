@@ -1,17 +1,9 @@
-/**
- * ============================================================================
- * CELL WARS - MAIN GAME LOGIC
- * ============================================================================
- * Verze: 1.2 (Implementace vlastních obrázků pro nepřátelské vojáky)
- * Popis: Strategická hra o dobývání buněk. 
- * Hráč (zelená) bojuje proti AI (fialová) o ovládnutí mapy.
- * ============================================================================
- */
+
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// ------------------- GRAFIKA - NAČTENÍ OBRÁZKŮ -------------------
+
 
 const imgPlayer = new Image();
 imgPlayer.src = "cell_player.png";
@@ -52,7 +44,7 @@ function nactiObrazek(img) {
     });
 }
 
-// ------------------- GLOBÁLNÍ PROMĚNNÉ -------------------
+
 
 let selectedCell = null;        // Aktuálně vybraná buňka hráče pro vysílání vojsk
 let lastMouse = { x: 0, y: 0 }; // Poslední známá pozice myši
@@ -68,7 +60,7 @@ let gamePaused = false;
 let gameWon = false;
 let levelWon = false;
 
-// ------------------- LEVELS CONFIG -------------------
+
 /**
  * Definice rozložení buněk pro jednotlivé úrovně.
  * Lives určují počet počátečních vojáků a zároveň maximální kapacitu buňky.
@@ -110,7 +102,7 @@ let currentLevel = 1;
 let cells = [];
 let flakes = [];
 
-// ------------------- LOGIKA ÚROVNÍ A UKLÁDÁNÍ -------------------
+
 
 function clearAllLinks() {
     for (let link of activeLinks) {
@@ -223,7 +215,7 @@ if (backToMenuBtn) {
     });
 }
 
-// ------------------- TŘÍDA PRO BUNĚK (CELL CLASS) -------------------
+
 class Cell {
     constructor(x, y, radius, color, owner) {
         this.x = x;
@@ -284,7 +276,6 @@ class Cell {
     }
 }
 
-// ------------------- POMOCNÉ FUNKCE (HELPERS) -------------------
 
 /**
  * Najde nejbližší buňku k daným souřadnicím.
@@ -306,7 +297,8 @@ function findClosestCell(x, y, expandedRadius = false) {
 }
 
 /**
- * Matematická funkce pro detekci, zda je bod blízko úsečky (pro klikání na linky).
+ * Matematická funkce pro detekci
+ *pro klikání na linky
  */
 function isPointNearLine(x, y, a, b, threshold = 6) {
     const vx = b.x - a.x;
@@ -362,7 +354,7 @@ function stopAutoSendToTarget(target) {
     });
 }
 
-// ------------------- UDÁLOSTI MYŠI (EVENTS) -------------------
+
 
 canvas.addEventListener("mousemove", function(e) {
     const rect = canvas.getBoundingClientRect();
@@ -456,7 +448,7 @@ canvas.addEventListener("click", function() {
     }
 });
 
-// ------------------- POHYB A VYKRESLOVÁNÍ VOJÁKŮ -------------------
+
 
 /**
  * Hlavní funkce pro aktualizaci pozic vojáků a řešení kolizí s buňkami.
@@ -510,7 +502,7 @@ function updateSoldiers() {
 
         // --- UPRAVENÉ VYKRESLOVÁNÍ VOJÁKA ---
         if (s.owner === 2 && imgEnemySoldier.complete) {
-            // Pokud je to nepřítel (owner 2), vykresli tvůj obrázek (fialový voják)
+            // Pokud je to nepřítel  vykresli tvůj obrázek 
             // Velikost 24x24 (střed je s.x, s.y)
             ctx.drawImage(imgEnemySoldier, s.x - 12, s.y - 12, 24, 24); 
         } else {
@@ -523,7 +515,7 @@ function updateSoldiers() {
     }
 }
 
-// ------------------- REGENERACE VOJSKA -------------------
+
 /**
  * Pravidelně doplňuje vojáky do buněk, které nejsou pod útokem.
  */
@@ -537,10 +529,9 @@ setInterval(function() {
     }
 }, 800);
 
-// ------------------- UMĚLÁ INTELIGENCE (AI) -------------------
-/**
- * Jednoduchá AI, která náhodně vysílá vojáky z nepřátelských buněk na cíle.
- */
+
+
+ 
 setInterval(function() {
     if (gamePaused || gameOver) return;
     const enemies = cells.filter(function(c) { return c.owner === 2 && c.soldiers > 5; });
@@ -553,7 +544,7 @@ setInterval(function() {
     }
 }, 800);
 
-// ------------------- KONTROLA KONCE HRY -------------------
+
 function checkGameEnd() {
     if (gameOver) return;
     const hasGreen = cells.some(function(c) { return c.owner === 1; });
@@ -590,7 +581,7 @@ function closeRules() {
     gamePaused = false;
 }
 
-// ------------------- HLAVNÍ SMYČKA VYKRESLOVÁNÍ (DRAW LOOP) -------------------
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -609,7 +600,7 @@ function draw() {
         ctx.globalAlpha = 1.0;
     }
 
-    // Aktivní linky (proudy vojáků)
+    // Aktivní linky 
     for (let link of activeLinks) {
         ctx.beginPath();
         ctx.moveTo(link.from.x, link.from.y);
@@ -654,7 +645,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// ------------------- INICIALIZACE A SPUŠTĚNÍ -------------------
+
 
 // Načtení levelu z URL parametrů
 try {
@@ -679,8 +670,3 @@ Promise.all([
     draw();
 });
 
-/**
- * KONEC SOUBORU main.js
- * Celkový počet řádků je navýšen pomocí dokumentace a čistého formátování.
- * Logika zůstala zachována podle tvých požadavků.
- */

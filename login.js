@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const username = document.getElementById("username");
     const password = document.getElementById("password");
 
-    // REGISTRACE - uloží nového uživatele
+    //uloží nového uživatele
     function register() {
         const user = username.value.trim();
         const pass = password.value.trim();
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
         password.value = "";
     }
 
-    // PŘIHLÁŠENÍ - ověří uživatele a přihlásí ho
+    // ověří uživatele a přihlásí ho
     function login() {
         const user = username.value.trim();
         const pass = password.value.trim();
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ODHLÁŠENÍ - odhlásí uživatele
+    //odhlásí uživatele
     function logout() {
         // smažeme přihlášeného uživatele
         localStorage.removeItem("loggedUser");
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ZOBRAZENÍ UŽIVATELE - zkontroluje localStorage a zobrazí panel
+    // zkontroluje localStorage a zobrazí panel
     function showUser() {
         const user = localStorage.getItem("loggedUser");
 
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ZÍSKÁNÍ PŘIHLÁŠENÉHO UŽIVATELE - vrátí jméno nebo null
+    //vrátí jméno nebo null
     function getLoggedUser() {
         const user = localStorage.getItem("loggedUser");
         return user;
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return progress;
     }
 
-    // ULOŽENÍ PROGRESSU - uloží postup přihlášeného hráče
+    //uloží postup přihlášeného hráče
     function saveProgress(progress) {
         const user = getLoggedUser();
 
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem(klic, data);
     }
 
-    // ULOŽENÍ VÝHRY - uloží dokončený level
+    // uloží dokončený level
     function saveWin(levelNumber) {
         // načteme aktuální postup hráče
         const progress = getProgress();
@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // JE LEVEL DOKONČEN? - vrátí true nebo false
+    // vrátí true nebo false
     function isLevelCompleted(level) {
         const progress = getProgress();
         const nazevLevelu = "level" + level;
@@ -222,13 +222,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const dokoncen = progress[nazevLevelu];
 
         if (dokoncen) {
-            return "🏆 " + name + " — dokončen";
+            return "✅ " + name + " — dokončen";
         } else {
-            return "🔒 " + name + " — nedokončen";
+            return "❌ " + name + " — nedokončen";
         }
     }
 
-    // VYKRESLENÍ ACHIEVEMENTŮ - zobrazí seznam achievementů
+    // zobrazí seznam achievementů
     function renderAchievements() {
         const list = document.getElementById("achievementsList");
         if (!list) {
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // OTEVŘENÍ ACHIEVEMENTŮ - zobrazí popup
+    //  zobrazí popup
     function openAchievements() {
         window.gamePaused = true;
         const achievementsPopup = document.getElementById("achievementsPopup");
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderAchievements();
     }
 
-    // ZAVŘENÍ ACHIEVEMENTŮ - skryje popup
+    // skryje popup
     function closeAchievements() {
         window.gamePaused = false;
         const achievementsPopup = document.getElementById("achievementsPopup");
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         achievementsPopup.classList.add("hidden");
     }
 
-    // AKTUALIZACE TLAČÍTEK LEVELŮ - nastaví správný styl každého tlačítka
+    // nastaví správný styl každého tlačítka
     function updateLevelButtons() {
         const tlacitka = document.querySelectorAll(".level-btn");
 

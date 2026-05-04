@@ -1,4 +1,4 @@
-/* CHEAT: * = vybere VŠECHNY elementy na stránce */
+/*vybere VŠECHNY elementy na stránce */
 /* box-sizing: border-box = padding a border se počítají DO šířky, ne navíc */
 * {
     margin: 0;
@@ -6,7 +6,7 @@
     box-sizing: border-box;
 }
 
-/* CHEAT: html, body = základní nastavení celé stránky */
+/* html, body = základní nastavení celé stránky */
 /* overflow-x: hidden = zakáže horizontální scrollování */
 html, body {
     width: 100%;
@@ -16,16 +16,16 @@ html, body {
     font-family: Arial, Helvetica, sans-serif; /* CHEAT: záložní fonty odděleny čárkou */
 }
 
-/* CHEAT: scroll-behavior: smooth = plynulé scrollování při kliknutí na #odkaz */
+/*scroll-behavior: smooth = plynulé scrollování při kliknutí na #odkaz */
 html {
     scroll-behavior: smooth;
 }
 
-/* CHEAT: section = každá sekce zabere celou výšku obrazovky */
+/* section = každá sekce zabere celou výšku obrazovky */
 /* flexbox = zarovná obsah doprostřed vodorovně i svisle */
 section {
     width: 100%;
-    min-height: 100vh; /* CHEAT: 100vh = 100% výšky okna prohlížeče */
+    min-height: 100vh; /* 100vh = 100% výšky okna prohlížeče */
     background: #111;
     display: flex;
     flex-direction: column;    /* CHEAT: column = elementy pod sebou */
@@ -33,7 +33,7 @@ section {
     justify-content: center;   /* CHEAT: zarovná svisle na střed */
 }
 
-/* CHEAT: třídy začínající tečkou = class selektory */
+/*třídy začínající tečkou = class selektory */
 .hero-section {
     background: #111;
     color: white;
@@ -44,31 +44,31 @@ section {
     font-size: 64px;
     font-weight: bold;
     color: white;
-    margin-bottom: 20px; /* CHEAT: margin = vnější mezera, padding = vnitřní mezera */
+    margin-bottom: 20px; /*margin = vnější mezera, padding = vnitřní mezera */
 }
 
 .intro-text {
     font-size: 24px;
     color: #ddd;
-    max-width: 720px; /* CHEAT: max-width = text se nezalamuje příliš široce */
+    max-width: 720px; /* max-width = text se nezalamuje příliš široce */
     text-align: center;
     margin-bottom: 40px;
-    line-height: 1.5; /* CHEAT: 1.5 = řádkování 150% velikosti fontu */
+    line-height: 1.5; /* 1.5 = řádkování 150% velikosti fontu */
 }
 
-/* CHEAT: animation = animace definovaná pomocí @keyframes níže */
+/*animation = animace definovaná pomocí @keyframes níže */
 .scroll-down {
     margin-top: 50px;
     font-size: 32px;
     color: white;
     text-decoration: none;
-    animation: bounce 2s infinite; /* CHEAT: infinite = opakuje se donekonečna */
+    animation: bounce 2s infinite; /*infinite = opakuje se donekonečna */
 }
 
-/* CHEAT: @keyframes = definuje animaci, 0% = začátek, 100% = konec */
+
 @keyframes bounce {
-    0%, 100% { transform: translateY(0); }    /* CHEAT: translateY = pohyb po ose Y */
-    50% { transform: translateY(-10px); }      /* CHEAT: záporná Y = nahoru */
+    0%, 100% { transform: translateY(0); }    /*translateY = pohyb po ose Y */
+    50% { transform: translateY(-10px); }      /* záporná Y = nahoru */
 }
 
 .levels-section {
@@ -81,31 +81,31 @@ section {
     margin-bottom: 30px;
 }
 
-/* CHEAT: .level-buttons button = vybere VŠECHNA tlačítka uvnitř .level-buttons */
+/*.level-buttons button = vybere VŠECHNA tlačítka uvnitř .level-buttons */
 .level-buttons button {
-    padding: 20px 40px; /* CHEAT: padding: svisle vodorovně */
+    padding: 20px 40px; 
     font-size: 20px;
-    border-radius: 40px; /* CHEAT: border-radius = zaoblené rohy, 50% = kruh */
+    border-radius: 40px; 
     border: none;
-    cursor: pointer; /* CHEAT: cursor: pointer = ukazatel myši se změní na ručičku */
+    cursor: pointer; /*cursor: pointer = ukazatel myši se změní na ručičku */
     background: white;
     color: #000000;
-    transition: 0.2s ease; /* CHEAT: transition = plynulá změna při hoveru */
+    transition: 0.2s ease; /* transition = plynulá změna při hoveru */
 }
 
-/* CHEAT: :hover = styl při najetí myší, :not(:disabled) = jen pokud není disabled */
+/* :hover = styl při najetí myší, :not(:disabled) = jen pokud není disabled */
 .level-buttons button:hover:not(:disabled) {
     background: #4285f4;
     color: white;
 }
 
-/* CHEAT: :disabled = styl pro zakázané tlačítko */
+/* disabled = styl pro zakázané tlačítko */
 .level-buttons button:disabled {
-    opacity: 0.4;        /* CHEAT: opacity = průhlednost 0-1 */
-    cursor: not-allowed; /* CHEAT: zobrazí zakázaný kurzor */
+    opacity: 0.4;        /*opacity = průhlednost 0-1 */
+    cursor: not-allowed; /*zobrazí zakázaný kurzor */
 }
 
-/* CHEAT: .level-btn.locked = element musí mít OBĚ třídy zároveň */
+/*.level-btn.locked = element musí mít OBĚ třídy zároveň */
 .level-btn.locked {
     background: #444;
     opacity: 0.8;
@@ -118,7 +118,7 @@ section {
     color: white;
 }
 
-/* CHEAT: linear-gradient = přechod mezi barvami */
+/*linear-gradient = přechod mezi barvami */
 /* box-shadow = stín, rgba = barva s průhledností */
 .level-btn.completed {
     background: linear-gradient(45deg, gold, #ffd700);
@@ -153,12 +153,12 @@ section {
     cursor: not-allowed;
 }
 
-/* CHEAT: :not(:disabled) = animace jen na aktivním tlačítku */
+/*:not(:disabled) = animace jen na aktivním tlačítku */
 .multiplayer-button button:not(:disabled) {
     animation: pulseGlow 2s infinite;
 }
 
-/* CHEAT: transform: scale = zvětší element, box-shadow = záře kolem */
+/* transform: scale = zvětší element, box-shadow = záře kolem */
 @keyframes pulseGlow {
     0%   { transform: scale(1);    box-shadow: 0 0 0 rgba(52, 168, 83, 0.0); }
     50%  { transform: scale(1.05); box-shadow: 0 0 25px rgba(52, 168, 83, 0.6); }
@@ -177,7 +177,7 @@ section {
     z-index: 999; /* CHEAT: z-index = vrstva, vyšší = nad ostatními elementy */
 }
 
-/* CHEAT: .hidden třída = skryje element, JS ji přidává/odebírá */
+/* .hidden třída = skryje element, javascript ji odebírá */
 #endOverlay.hidden {
     display: none;
 }
@@ -209,7 +209,7 @@ section {
     color: white;
 }
 
-/* CHEAT: position: fixed = tlačítko pravidel vždy v pravém dolním rohu */
+/* tlačítko pravidel vždy v pravém dolním rohu */
 #rulesButton {
     position: fixed;
     bottom: 20px;
@@ -221,7 +221,7 @@ section {
     background: #fff;
     color: #111;
     cursor: pointer;
-    z-index: 1000; /* CHEAT: 1000 = nad endOverlay (999) */
+    z-index: 1000; 
     transition: 0.2s ease;
 }
 
@@ -237,7 +237,7 @@ section {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1001; /* CHEAT: 1001 = nad rulesButton (1000) */
+    z-index: 1001; 
 }
 
 #rulesOverlay.hidden { display: none; }
@@ -257,7 +257,7 @@ section {
 .rulesBox button { display: block; margin: 0 auto; padding: 12px 25px; font-size: 16px; border-radius: 30px; border: none; background: #fff; color: #111; cursor: pointer; }
 .rulesBox button:hover { background: #4285f4; color: white; }
 
-/* CHEAT: #loginBox = id selektor (mřížka), vybere element s id="loginBox" */
+/*#loginBox = id selektor (mřížka), vybere element s id*/
 #loginBox {
     position: fixed; /* CHEAT: fixně v rohu i při scrollování */
     top: 20px;
@@ -272,7 +272,7 @@ section {
     box-shadow: 0 0 20px rgba(255,255,255,0.05);
 }
 
-/* CHEAT: width: 100% = input zabere celou šířku rodiče (#loginBox) */
+/* width: 100% = input zabere celou šířku rodiče*/
 #loginBox input {
     width: 100%;
     margin-bottom: 8px;
@@ -298,8 +298,8 @@ section {
 
 #loginMessage { font-size: 12px; color: #f55; margin-top: 6px; }
 
-/* CHEAT: .hidden = univerzální třída pro skrytí elementu */
-/* JS přidává/odebírá tuto třídu místo přímé změny display */
+/* .hidden = univerzální třída pro skrytí elementu */
+/* odebírá tuto třídu místo přímé změny display */
 .hidden { display: none; }
 
 .achievements-btn {
@@ -315,8 +315,8 @@ section {
     box-shadow: 0 0 20px rgba(255,255,255,0.08);
 }
 
-/* CHEAT: .achievement-item = jeden řádek v seznamu achievementů */
-/* display: flex + gap = flexbox s mezerou mezi ikonou a textem */
+/* .achievement-item = jeden řádek v seznamu achievementů */
+/*flex + gap = flexbox s mezerou mezi ikonou a textem */
 .achievement-item {
     background: #111;
     border-radius: 12px;
@@ -328,14 +328,13 @@ section {
     gap: 12px;
 }
 
-/* CHEAT: .achievement-item.gold = zlatý styl pro splněné achievementy */
+/* .achievement-item.gold = zlatý styl pro splněné achievementy */
 .achievement-item.gold {
     background: linear-gradient(135deg, #d4af37, #ffd700);
     color: black;
 }
 
-/* CHEAT: .notification = popup uprostřed obrazovky */
-/* transform: translate(-50%, -50%) + top/left: 50% = perfektní vycentrování */
+/* .notification = popup uprostřed obrazovky */
 .notification {
     position: fixed;
     top: 50%;
@@ -352,7 +351,7 @@ section {
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
 }
 
-/* CHEAT: .overlay = stejné jako endOverlay ale jako obecná třída */
+/* .overlay = stejné jako endOverlay ale jako obecná třída */
 .overlay {
     position: fixed;
     inset: 0;
@@ -365,7 +364,7 @@ section {
 
 .overlay.hidden { display: none; }
 
-/* CHEAT: .overlay-box = obsah uvnitř overlay (bílý rámeček na tmavém pozadí) */
+/* overlay-box = obsah uvnitř overlay  */
 .overlay-box {
     background: #111;
     border-radius: 16px;
@@ -375,7 +374,7 @@ section {
     min-width: 300px;
 }
 
-/* CHEAT: .overlay-box.win = zlatý rámeček pro výherní overlay */
+/* overlay-box.win = zlatý rámeček pro výherní overlay */
 .overlay-box.win { border: 2px solid gold; }
 
 .overlay-box button {
@@ -391,7 +390,7 @@ section {
 
 .overlay-box button:hover { background: gold; }
 
-/* CHEAT: .popup = fullscreen overlay pro win popup (starší verze) */
+/* fullscreen overlay pro win popup */
 .popup {
     position: fixed;
     inset: 0;
@@ -412,4 +411,49 @@ section {
     color: black;
     border: none;
     cursor: pointer;
+}
+
+
+/* Přizpůsobení herního plátna , aby nepřeteklo z obrazovky */
+#gameCanvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Zmenšení textů a tlačítek pro obrazovky */
+@media (max-width: 768px) {
+    /* Zmenšení hlavního nadpisu a textu */
+    .title { 
+        font-size: 36px; 
+    }
+    .intro-text { 
+        font-size: 16px; 
+        padding: 0 15px; 
+    }
+    
+   
+    .level-buttons button, 
+    .multiplayer-button button { 
+        padding: 12px 24px; 
+        font-size: 16px; 
+        width: 80%; 
+        margin-bottom: 15px;
+    }
+
+    
+    .level-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+   
+    #loginBox {
+        top: 10px;
+        right: 10px;
+        width: 150px;
+        padding: 10px;
+    }
 }

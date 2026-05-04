@@ -2,87 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- CHEAT: viewport = stránka se přizpůsobí mobilním obrazovkám, nesmazávat -->
+    <!-- viewport = stránka se přizpůsobí mobilním obrazovkám, nesmazávat -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brain Cell Wars</title>
-    <!-- CHEAT: link rel="stylesheet" = připojí CSS soubor k tomuto HTML -->
+    <!-- link rel="stylesheet" = připojí CSS soubor k tomuto HTML -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="menu">
 
-<!-- CHEAT: přihlašovací box fixně v pravém horním rohu (position: fixed v CSS) -->
+<!--  přihlašovací box fixně v pravém horním rohu (position: fixed v CSS) -->
 <div id="loginBox">
-    <!-- CHEAT: loginForm = zobrazí se když nikdo není přihlášen -->
+    <!--  loginForm = zobrazí se když nikdo není přihlášen -->
     <div id="loginForm">
-        <!-- CHEAT: type="password" = skryje znaky při psaní hesla -->
+        <!--  type="password" = skryje znaky při psaní hesla -->
         <input type="text" id="username" placeholder="Name">
         <input type="password" id="password" placeholder="Password" autocomplete="current-password">
 
-        <!-- CHEAT: onclick="login()" zavolá funkci login() z login.js -->
+        <!--onclick="login()" zavolá funkci login() z login.js -->
         <button onclick="login()">Login</button>
         <button onclick="register()">Register</button>
-        <!-- CHEAT: sem se vypíše chybová hláška při špatném přihlášení -->
+        <!-- sem se vypíše chybová hláška při špatném přihlášení -->
         <p id="loginMessage"></p>
     </div>
 
-    <!-- CHEAT: userPanel = zobrazí se po úspěšném přihlášení, jinak skrytý -->
+    <!-- userPanel = zobrazí se po úspěšném přihlášení, jinak skrytý -->
     <div id="userPanel" class="hidden">
         <span id="welcomeText"></span>
         <button onclick="logout()">Logout</button>
     </div>
 </div>
 
-<!-- CHEAT: section = zabere celou výšku obrazovky (min-height: 100vh v CSS) -->
+<!--  section = zabere celou výšku obrazovky (min-height: 100vh v CSS) -->
 <section class="hero-section" id="hero">
     <h1 class="title">Brain Cell Wars</h1>
-    <!-- CHEAT: intro text je omezený na max-width: 720px v CSS aby byl čitelný -->
+    <!--  intro text je omezený na max-width: 720px v CSS aby byl čitelný -->
     <p class="intro-text">
         Čau lidi! Vítejte ve hře Brain Cell Wars, kde budete bránit své mozkové buňky před invazí škodlivých virů a bakterií.
     </p>
-    <!-- CHEAT: href="#levels" = skočí na sekci s id="levels" na stejné stránce -->
+    <!--href="#levels" = skočí na sekci s id="levels" na stejné stránce -->
     <a href="#levels" class="scroll-down">&#8595; Scroll Down</a>
 </section>
 
-<!-- CHEAT: druhá sekce = výběr levelů, id="levels" sem skáče šipka nahoru -->
+<!-- druhá sekce = výběr levelů, id="levels" sem skáče šipka nahoru -->
 <section class="levels-section" id="levels">
     <h2>Můžete zkusit náš level:</h2>
 
     <div class="level-buttons">
-        <!-- CHEAT: data-level="1" = vlastní atribut, čte ho updateLevelButtons() v login.js -->
-        <!-- CHEAT: class="level-btn" = JS ho najde přes querySelectorAll(".level-btn") -->
+        <!-- data-level="1" = vlastní atribut, čte ho updateLevelButtons() v login.js -->
+        <!-- class="level-btn" = JS ho najde přes querySelectorAll(".level-btn") -->
         <button class="level-button level-btn" data-level="1">LEVEL 1</button>
         <button class="level-button level-btn" data-level="2">LEVEL 2</button>
-        <!-- CHEAT: disabled = tlačítko nejde kliknout, odstraň až level 3 bude hotový -->
+        <!-- disabled = tlačítko nejde kliknout, odstraň až level 3 bude hotový -->
         <button class="level-button level-btn" data-level="3">LEVEL 3</button>
     </div>
 
-    <!-- CHEAT: disabled = multiplayer zatím neexistuje, jen pro ukázku -->
+    <!--disabled = multiplayer zatím neexistuje, jen pro ukázku -->
     <div class="multiplayer-button">
-        <button disabled>MULTIPLAYER (COMING SOON)</button>
+        <button disabled>MULTIPLAYER (Přijde brzo)</button>
     </div>
 </section>
 
-<!-- CHEAT: login.js musí být načteno PŘED inline scriptem níže -->
+<!--: login.js musí být načteno PŘED inline scriptem níže -->
 <!-- protože inline script volá updateLevelButtons() která je definována v login.js -->
 <script src="login.js"></script>
 
-<!-- CHEAT: achievements tlačítko fixně vlevo nahoře (position: fixed v CSS) -->
-<button id="achievementsBtn" class="level-button achievements-btn">🏆 ACHIEVEMENTS</button>
+<!-- achievements tlačítko fixně vlevo nahoře (position: fixed v CSS) -->
+<button id="achievementsBtn" class="level-button achievements-btn">úspěchy</button>
 
-<!-- CHEAT: achievements popup = skrytý dokud hráč neklikne na tlačítko -->
+<!-- achievements popup = skrytý dokud hráč neklikne na tlačítko 
 <div id="achievementsPopup" class="notification hidden">
     <h2>Úspěchy</h2>
-    <!-- CHEAT: achievementsList = sem renderAchievements() dynamicky vkládá HTML -->
+    <!-- achievementsList = sem renderAchievements() dynamicky vkládá HTML -->
     <div id="achievementsList"></div>
     <button id="achCloseBtn">Zavřít</button>
 </div>
 
 <script>
-// CHEAT: DOMContentLoaded = počká až se načte celé HTML, pak spustí kód
+// DOMContentLoaded = počká až se načte celé HTML, pak spustí kód
 // bez toho by getElementById nenašel elementy protože by ještě neexistovaly
 document.addEventListener('DOMContentLoaded', () => {
 
-    // CHEAT: updateLevelButtons() přidá správné třídy (locked/unlocked/completed)
+    //  updateLevelButtons() přidá správné třídy 
     // a onclick handlery na všechna tlačítka levelů podle uloženého postupu
     if (typeof updateLevelButtons === 'function') updateLevelButtons();
 
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const achievementsPopup = document.getElementById("achievementsPopup");
     const achCloseBtn = document.getElementById("achCloseBtn");
 
-    // CHEAT: addEventListener("click", ...) = reaguje na kliknutí na tlačítko
+    // addEventListener reaguje na kliknutí na tlačítko
     if (achievementsBtn) {
         achievementsBtn.addEventListener("click", () => {
             // CHEAT: typeof kontroluje jestli funkce existuje, aby nehavaroval kód
