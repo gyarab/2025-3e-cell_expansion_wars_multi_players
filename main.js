@@ -84,7 +84,7 @@ const levels = {
             { id: 6, x: 800, y: 700, color: "blue", lives: 20 }
         ]
     },
-    3: {
+    3: { 
         cells: [
             { id: 1, x: 100, y: 400, color: "green", lives: 50 },
             { id: 2, x: 900, y: 400, color: "purple", lives: 50 },
@@ -287,7 +287,7 @@ function findClosestCell(x, y, expandedRadius = false) {
 
     for (let c of cells) {
         const dist = Math.hypot(x - c.x, y - c.y);
-        const detectionRadius = expandedRadius ? radiusFactor : c.radius;
+        const detectionRadius = expandedRadius ? (c.radius + 60) : (c.radius + 10);
         if (dist < detectionRadius && dist < closestDist) {
             closest = c;
             closestDist = dist;
@@ -350,7 +350,7 @@ function stopAutoSendToTarget(target) {
             clearInterval(link.interval);
             return false;
         }
-        return true;
+        return true;    
     });
 }
 
@@ -383,6 +383,15 @@ canvas.addEventListener('pointerdown', function(e) {
     }
 
     if (selectedCell && snapTarget) {
+        
+        if (selectedCell.owner !== 1) {
+        selectedCell = null;
+        snapTarget = null;
+        return;
+    }
+
+        
+        
         const existing = activeLinks.find(function(l) {
             return l.from === selectedCell && l.to === snapTarget;
         });
@@ -421,6 +430,15 @@ canvas.addEventListener("click", function() {
     }
 
     if (selectedCell && snapTarget) {
+      
+      if (selectedCell.owner !== 1) {
+        selectedCell = null;
+        snapTarget = null;
+        return;
+    }
+
+      
+      
         const existing = activeLinks.find(function(l) {
             return l.from === selectedCell && l.to === snapTarget;
         });
@@ -481,6 +499,11 @@ function updateSoldiers() {
 
                     s.target.soldiers = 5;
                     s.target.underAttack = false;
+
+                    if (selectedCell === s.target) {
+                     selectedCell = null;
+                     snapTarget = null;
+                        }
 
                     // Zrušení všech linků spojených s dobytou buňkou
                     activeLinks = activeLinks.filter(function(link) {
