@@ -7,10 +7,26 @@ For more information on this file, see
 https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
 """
 
-import os
+#import os
 
+#from django.core.asgi import get_asgi_application
+
+#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prj.settings")
+
+#application = get_asgi_application()
+
+# zkouším propojit frontend s backendem - šimon kdyžtak smažeme moji část pokud nebude fungovat
+import os
 from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+import main.routing
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "prj.settings")
 
-application = get_asgi_application()
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(main.routing.websocket_urlpatterns)
+    ),
+})

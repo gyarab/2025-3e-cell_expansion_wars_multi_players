@@ -2,11 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 
 class LevelOrPreset(models.Model):
-    id = models.AutoField()
+    id = models.AutoField(primary_key=True) # šimon
     level_or_preset = models.BooleanField()
     visible_name = models.CharField(max_length=15, null=True)
     enabled = models.BooleanField()
-    data = models.JSONField(max_length=5000)
+    data = models.JSONField()
 
 class Playthrough(models.Model):
     start_datetime = models.DateTimeField()
@@ -21,8 +21,8 @@ class Playthrough(models.Model):
         "Player",
         through="Player_Playthrough",
         related_name="playthroughs"
-    )
-    game_state = models.JSONField(max_length=2500)
+    )  
+    game_state = models.JSONField()
 
 class Player(AbstractBaseUser):
     email = models.CharField(max_length=40, unique=True)

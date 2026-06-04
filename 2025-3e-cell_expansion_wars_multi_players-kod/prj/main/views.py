@@ -19,9 +19,10 @@ for funcname in "login", "logout", "render":
 content_type = "text/html; charset=utf-8"
 
 def get_whole_name(user):
+    if not user.is_authenticated:
+        return None
     names = [name for name in (user.first_name, user.last_name) if name != ""]
-    return " ".join(names) if user.is_authenticated else None
-
+    return " ".join(names) if names else None
 """
 def req_body(request):
     encoding = request.encoding
