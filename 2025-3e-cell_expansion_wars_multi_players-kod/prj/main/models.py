@@ -24,14 +24,44 @@ class Playthrough(models.Model):
     )  
     game_state = models.JSONField()
 
+
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+
+class PlayerManager(BaseUserManager):
+    def get_by_natural_key(self, username):
+        return self.get(username=username)
+    def create_superuser(self, username, password, **extra):
+        user = self.model(
+            username=username,
+            email=extra.get("email", "")
+        )
+        user.set_password(password)
+        user.is_superuser = True
+        user.is_staff = True
+        user.is_active = True
+        user.save(using=self._db)
+        return user
+
+
 class Player(AbstractBaseUser):
     email = models.CharField(max_length=40, unique=True)
     username = models.CharField(max_length=30, unique=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
     email_address_for_login = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
     USERNAME_FIELD = "username"
     EMAIL_FIELD = "email"
+    REQUIRED_FIELDS = ["email"]
+    objects = PlayerManager()
+    def has_perm(self, perm, obj=None):
+        return self.is_superuser
+    def has_module_perms(self, app_label):
+        return self.is_superuser
+    def __str__(self):
+        return self.username
 
 class Player_Playthrough(models.Model):
     end_of_player_datetime = models.DateTimeField(null=True)

@@ -45,7 +45,7 @@ async def homepage(request):
     presets = []
     levels = []
 
-    async for e in models.LevelOrPreset.objects.values("id", "level_or_preset", "visible_name", "enabled"):
+    async for e in models.LevelOrPreset.objects.all():
         (levels if e.level_or_preset else presets).append((e.id, e.visible_name, e.enabled))
 
     data = {"levels": levels, "presets": presets, "whole_user_name": name}
