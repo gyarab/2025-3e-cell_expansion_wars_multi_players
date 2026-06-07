@@ -22,6 +22,8 @@ from main import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.homepage),
+    path("game.html", views.game_page),
+    path("api/level/<int:level_id>/", views.get_level_data),
     re_path(r"^login/??$", views.login_view),
     re_path(r"^register/??$", views.register_view),
     re_path(r"^username_exists/(?P<username>.+?)/??$", views.username_exists),

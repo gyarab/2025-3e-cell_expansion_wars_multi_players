@@ -46,33 +46,38 @@ function odesliAkci(akce) {
     }
 }
 
-// Zpracování přijaté akce od druhého hráče
 function zpracujAkci(data) {
-    // pokud druhý hráč vytvořil linku
-    if (data.typ === "linka") {
-        const od = cells.find(function(c) { return c.id === data.od; });
-        const na = cells.find(function(c) { return c.id === data.na; });
-        if (od && na) {
-            startAutoSend(od, na);
+    console.log("Přijatá akce z backendu:", data);
+
+    // 1. Zpracování vytvoření linku mezi buňkami
+    if (data.type === 'vytvor_link') {
+        // cells je pole objektů buněk, které máš definované a vykresluješ v main.js
+        // Najdeme konkrétní objekty buněk podle ID doručených ze serveru
+        const zdrojovaBunka = cells.find(c => c.id === data.fromCellId);
+        const cilovaBunka = cells.find(c => c.id === data.toCellId);
+
+        if (zdrojovaBunka && cilovaBunka) {
+            // Zde zavoláme funkci z tvého původního main.js, která vytváří spojení.
+            // Například přidání do pole aktivních spojení:
+            activeLinks.push({
+                from: zdrojovaBunka,
+                to: cilovaBunka,
+                owner: data.senderUserId
+            });
+            
+            console.log(`Link vytvořen od buňky ${zdrojovaBunka.id} do ${cilovaBunka.id}`);
         }
     }
 
-    // pokud druhý hráč zrušil linku
-    if (data.typ === "zrusit_linku") {
-        const od = cells.find(function(c) { return c.id === data.od; });
-        const na = cells.find(function(c) { return c.id === data.na; });
-        if (od && na) {
-            activeLinks = activeLinks.filter(function(link) {
-                if (link.from === od && link.to === na) {
-                    clearInterval(link.interval);
-                    return false;
-                }
-                return true;
-            });
+    // 2. Zpracování zásahu buňky vojákem (synchronizace životů)
+    if (data.type === 'aktualizace_zivotu') {
+        const targetCell = cells.find(c => c.id === data.cellId);
+        if (targetCell) {
+            targetCell.lives = data.noveLives;
+            targetCell.color = data.novaBarva; // Změna barvy, pokud buňku někdo dobyl
         }
     }
 }
-
 // Vytvoření nové multiplayerové hry přes HTTP
 // Zavolá se když hráč klikne na tlačítko multiplayeru
 async function vytvorHru(uid, pid) {
@@ -93,7 +98,8 @@ async function vytvorHru(uid, pid) {
 
         // server vrátil ID nové hry
         const novaGameId = text.trim();
-        pripojWebSocket(uid, pid, novaGameId);
+        // Přesměrujeme hráče na multiplayerovou URL, kde view vrátí game.html a automaticky se připojíme na WS
+        window.location.href = "/user" + uid + "/preset" + pid + "/game" + novaGameId + "/";
 
     } catch (error) {
         console.error("Chyba při vytváření hry:", error);

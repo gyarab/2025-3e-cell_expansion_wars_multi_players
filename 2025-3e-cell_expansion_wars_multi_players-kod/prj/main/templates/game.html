@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!--  viewport = stránka se přizpůsobí mobilním obrazovkám -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Cell Wars – {{ level_name }}</title>
+    <!--  stejný CSS soubor pro celou hru, jeden soubor = méně práce -->
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+
+<body>
+    <!--  canvas = plocha pro kreslení hry pomocí JavaScriptu (ctx v main.js) -->
+    <!-- width/height v pixelech = rozlišení plátna, neshoduje se nutně s CSS velikostí -->
+    <canvas id="gameCanvas" width="1600" height="900"></canvas>
+
+    <!--  endOverlay = zobrazí se při výhře/prohře přes celou obrazovku -->
+    <!-- class="hidden" = skryté na začátku, JS ho odkryje přes classList.remove("hidden") -->
+    <div id="endOverlay" class="hidden">
+        <div class="endBox">
+            <!--  id="endTitle" a id="endText" = JS sem zapíše výsledek hry -->
+            <h1 id="endTitle"></h1>
+            <p id="endText"></p>
+            <!--  přesměruje zpět na hlavní stránku -->
+            <button onclick="location.href='/'">Back to Menu</button>
+        </div>
+    </div>
+
+    <!--  rulesButton = fixně v pravém dolním rohu (position:fixed v CSS) -->
+    <!-- kliknutí zavolá addEventListener v main.js, který zobrazí rulesOverlay -->
+    <button id="rulesButton">Pravidla</button>
+
+    <!--  rulesOverlay = překryje celou hru s pravidly, hra se pozastaví -->
+    <div id="rulesOverlay" class="hidden">
+        <div class="rulesBox">
+            <h2>Pravidla hry</h2>
+            <ul>
+                <!--  každé li = jedno pravidlo, lze přidávat/odebírat volně -->
+                <li>Bílá buňka je vaše a můžete ji ovládat.</li>
+                <li>Černá buňka je nepřítel a útočí na ostatní buňky automaticky.</li>
+                <li>Modré buňky jsou neutrální a můžete je dobýt.</li>
+                <li>Buňky mohou postupně obnovovat vojáky, pokud nejsou napadeny.</li>
+                <li>Cílem je převzít všechny buňky (vítězství) nebo zabránit nepříteli převzít vaše (prohra).</li>
+            </ul>
+            <!--  closeRules() je definována v main.js, schová overlay a obnoví hru -->
+            <button onclick="closeRules()">Zavřít</button>
+        </div>
+    </div>
+
+    <!--  winOverlay = zobrazí se při výhře, jiný styl než endOverlay (zlatý rámeček) -->
+    <!-- třída "overlay" = position:fixed přes celou obrazovku (v CSS) -->
+    <div id="winOverlay" class="overlay hidden">
+        <div class="overlay-box win">
+            <h2>Výhra!</h2>
+            <!--  winMessage = JS sem zapíše "Level X dokončen" -->
+            <p id="winMessage">Level dokončen</p>
+            <!--  backToMenuBtn má addEventListener v main.js, vyčistí stav a přesměruje -->
+            <button id="backToMenuBtn">Zpět do menu</button>
+        </div>
+    </div>
+
+    <script>
+    // Data úrovně z Djanga, která už máš připravená (nastavíme je na window, aby je vidělo main.js)
+    window.LEVEL_DATA = {{ level_data|safe }};
+    window.LEVEL_ID = {{ level_id }};
+    window.LEVEL_NAME = "{{ level_name }}";
+
+    // Assety dostupné přes Django static (upravujeme na window, aby main.js je našel)
+    window.ASSET_URLS = {
+        player: "{% static 'cell_player.png' %}",
+        enemy: "{% static 'cell_enemy.png' %}",
+        neutral: "{% static 'cell_neutral.png' %}",
+        enemySoldier: "{% static 'cell_enemy_soldier.png' %}",
+        backgroundTop: "{% static 'cellwars_background_top.png' %}"
+    };
+
+    // Multiplayer metadata (pokud je k dispozici)
+    {% if playthrough_id %}
+        window.isMultiplayer = true;
+        window.gameId = "{{ playthrough_id }}";
+        window.userId = "{{ request.user.id }}";
+    {% else %}
+        window.isMultiplayer = false;
+    {% endif %}
+    </script>
+
+    <script src="{% static 'login.js' %}"></script>
+    <script src="{% static 'multiplayer.js' %}"></script>
+    <script src="{% static 'main.js' %}"></script>
+
+    {% if playthrough_id %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Po načtení stránky necháme multiplayer.js otevřít websocket přes pripojWebSocket()
+        if (typeof pripojWebSocket === 'function') {
+            pripojWebSocket("{{ request.user.id }}", "{{ preset_id }}", "{{ playthrough_id }}");
+        }
+    });
+    </script>
+    {% endif %}
+</body>
+</html>

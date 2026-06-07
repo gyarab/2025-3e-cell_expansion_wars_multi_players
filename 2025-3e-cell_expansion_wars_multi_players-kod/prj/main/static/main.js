@@ -6,20 +6,20 @@ const ctx = canvas.getContext("2d");
 
 
 const imgPlayer = new Image();
-imgPlayer.src = "cell_player.png";
+imgPlayer.src = (window.ASSET_URLS && window.ASSET_URLS.player) ? window.ASSET_URLS.player : "cell_player.png";
 
 const imgEnemy = new Image();
-imgEnemy.src = "cell_enemy.png";
+imgEnemy.src = (window.ASSET_URLS && window.ASSET_URLS.enemy) ? window.ASSET_URLS.enemy : "cell_enemy.png";
 
 const imgNeutral = new Image();
-imgNeutral.src = "cell_neutral.png";
+imgNeutral.src = (window.ASSET_URLS && window.ASSET_URLS.neutral) ? window.ASSET_URLS.neutral : "cell_neutral.png";
 
 // NOVÝ OBRÁZEK PRO NEPŘÁTELSKÉ VOJÁKY
 const imgEnemySoldier = new Image();
-imgEnemySoldier.src = "cell_enemy_soldier.png";
+imgEnemySoldier.src = (window.ASSET_URLS && window.ASSET_URLS.enemySoldier) ? window.ASSET_URLS.enemySoldier : "cell_enemy_soldier.png";
 
 const imgBackgroundTop = new Image();
-imgBackgroundTop.src = "cellwars_background_top.png";
+imgBackgroundTop.src = (window.ASSET_URLS && window.ASSET_URLS.backgroundTop) ? window.ASSET_URLS.backgroundTop : "cellwars_background_top.png";
 
 const imgBackground = new Image();
 imgBackground.src = "imgonline-com-ua-TextureSeamless-6K5QQl8U0HrOdQ__1_.jpg";
@@ -48,7 +48,7 @@ function nactiObrazek(img) {
 
 let selectedCell = null;        // Aktuálně vybraná buňka hráče pro vysílání vojsk
 let lastMouse = { x: 0, y: 0 }; // Poslední známá pozice myši
-let activeSoldiers = [];        // Pole objektů reprezentujících vojáky v pohybu
+let soldiers = [];              // Pole objektů reprezentujících vojáky v pohybu
 let snapTarget = null;          // Cíl, ke kterému se "přilepí" preview linka
 let activeLinks = [];           // Seznam aktivních proudů (auto-vysílání)
 let snapRadius = 80;            // Vzdálenost pro detekci blízkosti buňky
@@ -105,9 +105,6 @@ let flakes = [];
 
 
 function clearAllLinks() {
-    for (let link of activeLinks) {
-        clearInterval(link.interval);
-    }
     activeLinks = [];
 }
 
@@ -116,7 +113,7 @@ function clearAllLinks() {
  */
 function loadLevel(levelNumber) {
     clearAllLinks();
-    activeSoldiers = [];
+    soldiers = [];
     selectedCell = null;
     snapTarget = null;
     cells = [];
@@ -199,7 +196,7 @@ const backToMenuBtn = document.getElementById("backToMenuBtn");
 if (backToMenuBtn) {
     backToMenuBtn.addEventListener('click', function() {
         try { clearAllLinks(); } catch (e) {}
-        activeSoldiers = [];
+        soldiers = [];
         selectedCell = null;
         snapTarget = null;
         gameOver = false;
@@ -263,6 +260,19 @@ class Cell {
             ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
             ctx.stroke();
         }
+
+        if (this === selectedCell || this.underAttack) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius + 10, 0, Math.PI * 2);
+            ctx.lineWidth = 4;
+            if (this === selectedCell) {
+                ctx.strokeStyle = "rgba(0, 255, 136, 0.7)";
+            } else {
+                ctx.strokeStyle = "rgba(255, 100, 100, 0.6)";
+            }
+            ctx.stroke();
+        }
+
         ctx.restore();
 
         // Vykreslení textu s počtem vojáků uprostřed buňky
@@ -322,37 +332,50 @@ function isPointNearLine(x, y, a, b, threshold = 6) {
 function sendSoldiers(from, to) {
     if (from.soldiers <= 0) return;
     from.soldiers -= 1;
-    activeSoldiers.push({
+    soldiers.push({
         x: from.x,
         y: from.y,
-        target: to,
+        targetCell: to,
+        speed: 4,
+        type: from.owner === 1 ? 'player' : 'enemy',
         owner: from.owner,
         from: from
     });
 }
 
 /**
- * Spustí periodické vysílání vojáků mezi dvěma buňkami.
+ * Spustí aktivní link mezi dvěma buňkami.
  */
 function startAutoSend(from, to) {
     if (activeLinks.some(function(link) { return link.from === from && link.to === to; })) return;
-
-    const interval = setInterval(function() {
-        if (!gamePaused) sendSoldiers(from, to);
-    }, 500);
-
-    activeLinks.push({ from, to, interval });
+    activeLinks.push({ from, to, owner: from.owner });
 }
 
 function stopAutoSendToTarget(target) {
     activeLinks = activeLinks.filter(function(link) {
-        if (link.to === target) {
-            clearInterval(link.interval);
-            return false;
-        }
-        return true;    
+        return link.to !== target;
     });
 }
+
+function generujVojakyZLinku() {
+    if (gamePaused || gameOver) return;
+    activeLinks.forEach(function(link) {
+        if (link.from.soldiers > 1) {
+            link.from.soldiers -= 1;
+            soldiers.push({
+                x: link.from.x,
+                y: link.from.y,
+                targetCell: link.to,
+                speed: 4,
+                type: link.owner === 1 ? 'player' : 'enemy',
+                owner: link.owner,
+                from: link.from
+            });
+        }
+    });
+}
+
+setInterval(generujVojakyZLinku, 500);
 
 
 
@@ -377,33 +400,55 @@ canvas.addEventListener('pointerdown', function(e) {
         return isPointNearLine(x, y, link.from, link.to, 8);
     });
     if (clickedLink) {
-        clearInterval(clickedLink.interval);
-        activeLinks = activeLinks.filter(function(l) { return l !== clickedLink; });
+        if (socket !== null && typeof odesliAkci === 'function') {
+            odesliAkci({
+                typ: "zrusit_linku",
+                od: clickedLink.from.id,
+                na: clickedLink.to.id
+            });
+        } else {
+            activeLinks = activeLinks.filter(function(l) { return l !== clickedLink; });
+        }
         return;
     }
 
     if (selectedCell && snapTarget) {
-        
         if (selectedCell.owner !== 1) {
-        selectedCell = null;
-        snapTarget = null;
-        return;
-    }
+            selectedCell = null;
+            snapTarget = null;
+            return;
+        }
 
-        
-        
         const existing = activeLinks.find(function(l) {
             return l.from === selectedCell && l.to === snapTarget;
         });
-        if (existing) {
-            clearInterval(existing.interval);
-            activeLinks = activeLinks.filter(function(l) {
-                return !(l.from === selectedCell && l.to === snapTarget);
-            });
+
+        if (socket !== null && typeof odesliAkci === 'function') {
+            if (existing) {
+                odesliAkci({
+                    typ: "zrusit_linku",
+                    od: selectedCell.id,
+                    na: snapTarget.id
+                });
+            } else {
+                odesliAkci({
+                    typ: "linka",
+                    od: selectedCell.id,
+                    na: snapTarget.id
+                });
+            }
         } else {
-            startAutoSend(selectedCell, snapTarget);
+            if (existing) {
+                activeLinks = activeLinks.filter(function(l) {
+                    return !(l.from === selectedCell && l.to === snapTarget);
+                });
+            } else {
+                startAutoSend(selectedCell, snapTarget);
+            }
         }
+
         snapTarget = null;
+        selectedCell = null;
         return;
     }
 
@@ -417,55 +462,7 @@ canvas.addEventListener('pointerdown', function(e) {
     if (c.owner === 1) {
         selectedCell = selectedCell === c ? null : c;
     }
-}, { passive: true });
-
-canvas.addEventListener("click", function() {
-    const clickedLink = activeLinks.find(function(link) {
-        return isPointNearLine(lastMouse.x, lastMouse.y, link.from, link.to, 8);
-    });
-    if (clickedLink) {
-        clearInterval(clickedLink.interval);
-        activeLinks = activeLinks.filter(function(l) { return l !== clickedLink; });
-        return;
-    }
-
-    if (selectedCell && snapTarget) {
-      
-      if (selectedCell.owner !== 1) {
-        selectedCell = null;
-        snapTarget = null;
-        return;
-    }
-
-      
-      
-        const existing = activeLinks.find(function(l) {
-            return l.from === selectedCell && l.to === snapTarget;
-        });
-        if (existing) {
-            clearInterval(existing.interval);
-            activeLinks = activeLinks.filter(function(l) {
-                return !(l.from === selectedCell && l.to === snapTarget);
-            });
-        } else {
-            startAutoSend(selectedCell, snapTarget);
-        }
-        snapTarget = null;
-        return;
-    }
-
-    const c = findClosestCell(lastMouse.x, lastMouse.y, true);
-    if (c === null) {
-        selectedCell = null;
-        snapTarget = null;
-        return;
-    }
-
-    if (c.owner === 1) {
-        selectedCell = selectedCell === c ? null : c;
-    }
-});
-
+}, { passive: true }); 
 
 
 /**
@@ -473,67 +470,63 @@ canvas.addEventListener("click", function() {
  * Implementuje také vizuální zobrazení vojáků.
  */
 function updateSoldiers() {
-    for (let s of [...activeSoldiers]) {
-        const dx = s.target.x - s.x;
-        const dy = s.target.y - s.y;
+    for (let i = soldiers.length - 1; i >= 0; i--) {
+        const s = soldiers[i];
+        const targetCell = s.targetCell;
+        const dx = targetCell.x - s.x;
+        const dy = targetCell.y - s.y;
         const dist = Math.hypot(dx, dy);
 
-        // Pokud voják dorazil do cíle
-        if (dist < 5) {
-            if (s.owner === s.target.owner) {
-                // Přátelské posily
-                s.target.soldiers++;
-                if (s.target.soldiers > s.target.maxSoldiers) {
-                    s.target.soldiers = s.target.maxSoldiers;
-                }
-            } else {
-                // Nepřátelský útok
-                s.target.underAttack = true;
-                s.target.soldiers--;
-                if (s.target.soldiers <= 0) {
-                    // Buňka byla dobyta
-                    s.target.owner = s.owner;
-                    if (s.target.owner === 1) s.target.color = "green";
-                    else if (s.target.owner === 2) s.target.color = "purple";
-                    else s.target.color = "blue";
-
-                    s.target.soldiers = 5;
-                    s.target.underAttack = false;
-
-                    if (selectedCell === s.target) {
-                     selectedCell = null;
-                     snapTarget = null;
-                        }
-
-                    // Zrušení všech linků spojených s dobytou buňkou
-                    activeLinks = activeLinks.filter(function(link) {
-                        if (link.from === s.target || link.to === s.target) {
-                            clearInterval(link.interval);
-                            return false;
-                        }
-                        return true;
-                    });
-                }
-            }
-            activeSoldiers.splice(activeSoldiers.indexOf(s), 1);
+        if (dist < 10) {
+            handleCellHit(s, targetCell);
+            soldiers.splice(i, 1);
             continue;
         }
 
-        // Samotný pohyb vojáka směrem k cíli
-        s.x += dx / dist * 4;
-        s.y += dy / dist * 4;
+        const moveX = dx / dist * s.speed;
+        const moveY = dy / dist * s.speed;
+        s.x += moveX;
+        s.y += moveY;
 
-        // --- UPRAVENÉ VYKRESLOVÁNÍ VOJÁKA ---
         if (s.owner === 2 && imgEnemySoldier.complete) {
-            // Pokud je to nepřítel  vykresli tvůj obrázek 
-            // Velikost 24x24 (střed je s.x, s.y)
-            ctx.drawImage(imgEnemySoldier, s.x - 12, s.y - 12, 24, 24); 
+            ctx.drawImage(imgEnemySoldier, s.x - 12, s.y - 12, 24, 24);
         } else {
-            // Pokud je to hráč (owner 1) nebo neutrální, použij kuličku
             ctx.beginPath();
             ctx.arc(s.x, s.y, 5, 0, Math.PI * 2);
             ctx.fillStyle = s.owner === 1 ? "#00ff88" : "white";
             ctx.fill();
+        }
+    }
+}
+
+function handleCellHit(soldier, cell) {
+    if (!cell) return;
+
+    if (cell.owner === soldier.owner) {
+        cell.soldiers++;
+        if (cell.soldiers > cell.maxSoldiers) {
+            cell.soldiers = cell.maxSoldiers;
+        }
+    } else {
+        cell.underAttack = true;
+        cell.soldiers--;
+        if (cell.soldiers <= 0) {
+            cell.owner = soldier.owner;
+            if (cell.owner === 1) cell.color = "green";
+            else if (cell.owner === 2) cell.color = "purple";
+            else cell.color = "blue";
+
+            cell.soldiers = 5;
+            cell.underAttack = false;
+
+            if (selectedCell === cell) {
+                selectedCell = null;
+                snapTarget = null;
+            }
+
+            activeLinks = activeLinks.filter(function(link) {
+                return link.from !== cell && link.to !== cell;
+            });
         }
     }
 }
@@ -670,13 +663,22 @@ function draw() {
 
 
 
-// Načtení levelu z URL parametrů
+// Načtení levelu z backendu nebo z URL parametrů
 try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const levelParam = parseInt(urlParams.get('level'), 10);
-    if (!isNaN(levelParam)) loadLevel(levelParam);
-    else loadLevel(1);
+    // Pokud jsou data z Djanga (šablona game.html), použij je
+    if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA && LEVEL_ID !== undefined) {
+        // Nahradit level z backendu do levels objektu
+        levels[LEVEL_ID] = LEVEL_DATA;
+        loadLevel(LEVEL_ID);
+    } else {
+        // Fallback na URL parametry pro starší verzi
+        const urlParams = new URLSearchParams(window.location.search);
+        const levelParam = parseInt(urlParams.get('level'), 10);
+        if (!isNaN(levelParam)) loadLevel(levelParam);
+        else loadLevel(1);
+    }
 } catch (e) {
+    console.error("Chyba při načítání levelu:", e);
     loadLevel(1);
 }
 

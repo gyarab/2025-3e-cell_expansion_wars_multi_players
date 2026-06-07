@@ -9,9 +9,10 @@ from django.db import IntegrityError, transaction
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import login, logout
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from main import models
+import json
 
 for funcname in "login", "logout", "render":
     globals()[funcname] = sync_to_async(globals()[funcname])
@@ -44,12 +45,51 @@ async def homepage(request):
     
     presets = []
     levels = []
-
+    
     async for e in models.LevelOrPreset.objects.all():
         (levels if e.level_or_preset else presets).append((e.id, e.visible_name, e.enabled))
 
     data = {"levels": levels, "presets": presets, "whole_user_name": name}
     return await render(request, "all.html", data, content_type=content_type)
+
+@require_GET
+async def game_page(request):
+    """Vrátí game.html s daty vybrané úrovně"""
+    level_id = request.GET.get('level')
+    
+    if not level_id:
+        # Pokud není level_id, vrátíme homepage
+        return await homepage(request)
+    
+    try:
+        level = await models.LevelOrPreset.objects.aget(id=int(level_id), level_or_preset=True)
+    except (models.LevelOrPreset.DoesNotExist, ValueError):
+        return fail
+    
+    user = await request.auser()
+    name = get_whole_name(user)
+    
+    data = {
+        "level_id": level.id,
+        "level_name": level.visible_name,
+        "level_data": level.data,
+        "whole_user_name": name,
+    }
+    
+    return await render(request, "game.html", data, content_type=content_type)
+
+@require_GET
+async def get_level_data(request, level_id):
+    """API endpoint - vrátí JSON s daty úrovně"""
+    try:
+        level = await models.LevelOrPreset.objects.aget(id=level_id, level_or_preset=True)
+        return JsonResponse({
+            "id": level.id,
+            "name": level.visible_name,
+            "data": level.data,
+        })
+    except models.LevelOrPreset.DoesNotExist:
+        return JsonResponse({"error": "Level not found"}, status=404)
 
 @require_GET
 async def username_exists(request, username):
@@ -267,5 +307,10 @@ async def multi_player_game(request, uid, preset_id, game_id):
         "players": players,
         "whole_user_name": get_whole_name(user),
     }
-
-    return await render(request, "all.html", data, content_type=content_type)
+    # Připrav data pro herní šablonu a vraťme přímo game.html (multiplayer režim)
+    data.update({
+        "level_id": preset_id,
+        "level_name": f"Zápas {play.id}",
+        "level_data": play.game_state,
+    })
+    return await render(request, "game.html", data, content_type=content_type)
