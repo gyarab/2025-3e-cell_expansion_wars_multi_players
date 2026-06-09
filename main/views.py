@@ -24,14 +24,6 @@ def get_whole_name(user):
         return None
     names = [name for name in (user.first_name, user.last_name) if name != ""]
     return " ".join(names) if names else None
-"""
-def req_body(request):
-    encoding = request.encoding
-    if not encoding:
-        encoding = settings.DEFAULT_CHARSET
-    
-    return request.body.decode(encoding)
-"""
 
 success = HttpResponse("success", content_type=content_type)
 fail = HttpResponse("fail", content_type=content_type)
@@ -54,11 +46,9 @@ async def homepage(request):
 
 @require_GET
 async def game_page(request):
-    """Vrátí game.html s daty vybrané úrovně"""
     level_id = request.GET.get('level')
     
     if not level_id:
-        # Pokud není level_id, vrátíme homepage
         return await homepage(request)
     
     try:
@@ -80,7 +70,6 @@ async def game_page(request):
 
 @require_GET
 async def get_level_data(request, level_id):
-    """API endpoint - vrátí JSON s daty úrovně"""
     try:
         level = await models.LevelOrPreset.objects.aget(id=level_id, level_or_preset=True)
         return JsonResponse({

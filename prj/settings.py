@@ -131,14 +131,71 @@ ALLOWED_HOSTS = ["*"]
 STATICFILES_DIRS = [
     BASE_DIR / "main" / "static",
 ]
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
 
-ALLOWED_HOSTS = ["*"]
 
-STATICFILES_DIRS = [
-    BASE_DIR / "main" / "static",
-]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

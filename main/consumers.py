@@ -6,7 +6,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.game_grp_id = f"pl{self.scope["url_route"]["kwargs"]["game_id"]}"
+        self.game_grp_id = f"pl{self.scope['url_route']['kwargs']['game_id']}"
 
         # Join room group
         await self.channel_layer.group_add(self.game_grp_id, self.channel_name)
