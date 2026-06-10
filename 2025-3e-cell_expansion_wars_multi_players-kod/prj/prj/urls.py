@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, re_path
+from django.conf import settings
+from django.conf.urls.static import static
 from main import views
 
 
@@ -34,3 +36,6 @@ urlpatterns = [
     re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/??$", views.multi_player_game_config),
     re_path(r"^user(?P<uid>[0-9]+?)/preset(?P<preset_id>[0-9]+?)/game(?P<game_id>[0-9]+?)/??$", views.multi_player_game),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

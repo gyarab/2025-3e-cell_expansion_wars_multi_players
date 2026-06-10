@@ -97,7 +97,9 @@ document.addEventListener('DOMContentLoaded', function() {
             password.value = "";
             message.textContent = "";
             showUser(user);
-            if (typeof updateLevelButtons === 'function') updateLevelButtons();
+            await loadProgress();
+            updateLevelButtons();
+            if (typeof renderAchievements === 'function') renderAchievements();
         } else {
             message.textContent = "Špatné přihlášení";
             message.style.color = "#f55";
@@ -161,20 +163,69 @@ document.addEventListener('DOMContentLoaded', function() {
     //     localStorage.setItem("progress_" + user, JSON.stringify(progress));
     // }
 
-    // progress zatím zůstává v localStorage - backend pro něj ještě endpoint nemá
-    // až bude, stačí přepsat getProgress a saveProgress na fetch stejně jako login
+    window.progressCache = null;
+
+    async function loadProgress() {
+        const user = document.getElementById("welcomeText")?.textContent.replace("Hello, ", "").trim();
+        if (!user) {
+            window.progressCache = {};
+            return window.progressCache;
+        }
+
+        try {
+            const resp = await fetch("/progress/load/");
+            if (!resp.ok) throw new Error("load failed");
+            const data = await resp.json();
+            window.progressCache = (data && typeof data.progress === "object" && data.progress !== null) ? data.progress : {};
+            return window.progressCache;
+        } catch (e) {
+            const data = localStorage.getItem("progress_" + user);
+            try {
+                window.progressCache = data ? JSON.parse(data) : {};
+            } catch (err) {
+                window.progressCache = {};
+            }
+            return window.progressCache;
+        }
+    }
+
+    async function saveProgress(progress) {
+        window.progressCache = progress || {};
+        const user = document.getElementById("welcomeText")?.textContent.replace("Hello, ", "").trim();
+        if (!user) return;
+
+        try {
+            const resp = await fetch("/progress/save/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken()
+                },
+                body: JSON.stringify({ progress: window.progressCache })
+            });
+            if (!resp.ok) throw new Error("save failed");
+        } catch (e) {
+            localStorage.setItem("progress_" + user, JSON.stringify(window.progressCache));
+        }
+    }
+
     function getProgress() {
+        if (window.progressCache !== null) {
+            return window.progressCache || {};
+        }
         const user = document.getElementById("welcomeText")?.textContent.replace("Hello, ", "").trim();
         if (!user) return {};
         const data = localStorage.getItem("progress_" + user);
-        if (data === null) return {};
-        return JSON.parse(data);
-    }
-
-    function saveProgress(progress) {
-        const user = document.getElementById("welcomeText")?.textContent.replace("Hello, ", "").trim();
-        if (!user) return;
-        localStorage.setItem("progress_" + user, JSON.stringify(progress));
+        if (data === null) {
+            window.progressCache = {};
+            return {};
+        }
+        try {
+            window.progressCache = JSON.parse(data);
+        } catch (err) {
+            window.progressCache = {};
+        }
+        return window.progressCache;
     }
 
     function saveWin(levelNumber) {
@@ -284,6 +335,16 @@ document.addEventListener('DOMContentLoaded', function() {
     window.saveWin = saveWin;
 
     showUser();
-    updateLevelButtons();
+    const loggedIn = document.getElementById("welcomeText")?.textContent.trim() !== "";
+    if (loggedIn) {
+        loadProgress().then(() => {
+            updateLevelButtons();
+            if (typeof renderAchievements === 'function') renderAchievements();
+        }).catch(() => {
+            updateLevelButtons();
+        });
+    } else {
+        updateLevelButtons();
+    }
 
 });

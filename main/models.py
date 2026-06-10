@@ -48,6 +48,7 @@ class Player(AbstractBaseUser):
     username = models.CharField(max_length=30, unique=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
+    progress = models.JSONField(default=dict, blank=True)
     email_address_for_login = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -62,6 +63,13 @@ class Player(AbstractBaseUser):
         return self.is_superuser
     def __str__(self):
         return self.username
+
+class GameResult(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="game_results")
+    level = models.ForeignKey(LevelOrPreset, on_delete=models.SET_NULL, null=True, related_name="game_results")
+    result = models.CharField(max_length=10)
+    score = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class Player_Playthrough(models.Model):
     end_of_player_datetime = models.DateTimeField(null=True)

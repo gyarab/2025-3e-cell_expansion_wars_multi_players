@@ -200,6 +200,67 @@ async def register_view(request):
 
     return success
 
+@require_GET
+async def load_progress(request):
+    user = await request.auser()
+    if not user.is_authenticated:
+        return JsonResponse({"progress": {}}, status=401)
+
+    progress = getattr(user, "progress", {}) or {}
+    return JsonResponse({"progress": progress})
+
+@require_POST
+@csrf_protect
+async def save_progress(request):
+    user = await request.auser()
+    if not user.is_authenticated:
+        return fail
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+        progress = payload.get("progress", {})
+        if not isinstance(progress, dict):
+            raise ValueError
+    except Exception:
+        return fail
+
+    @sync_to_async
+    def store_progress():
+        user.progress = progress
+        user.save(update_fields=["progress"])
+
+    await store_progress()
+    return success
+
+@require_POST
+@csrf_protect
+async def submit_result(request):
+    user = await request.auser()
+    if not user.is_authenticated:
+        return fail
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+        level_id = int(payload.get("level_id", 0))
+        result = str(payload.get("result", "")).lower()
+        score = int(payload.get("score", 0))
+        if result not in ("win", "lose"):
+            raise ValueError
+    except Exception:
+        return fail
+
+    try:
+        level = await models.LevelOrPreset.objects.aget(id=level_id, level_or_preset=True)
+    except models.LevelOrPreset.DoesNotExist:
+        return fail
+
+    @sync_to_async
+    def save_game_result():
+        models.GameResult.objects.create(player=user, level=level, result=result, score=score)
+
+    await save_game_result()
+    return success
+
 @csrf_protect
 async def game(request, uid, level_id, game_id):
     if request.method != "GET":

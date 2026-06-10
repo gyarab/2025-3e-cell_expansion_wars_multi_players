@@ -80,6 +80,44 @@ function clearAllLinks() {
     activeLinks = [];
 }
 
+// UPRAVENÁ FUNKCE PODLE ZADÁNÍ
+function normalizeColor(color) {
+    if (!color) return "blue";
+    const c = color.toString().toLowerCase().trim();
+
+    switch (c) {
+        case "green":
+        case "white":
+        case "player":
+            return "green";
+
+        case "purple":
+        case "black":
+        case "enemy":
+            return "black";
+
+        case "blue":
+        case "neutral":
+            return "blue";
+
+        default:
+            console.warn("Unknown color:", color);
+            return "blue";
+    }
+}
+
+// UPRAVENÁ FUNKCE PODLE ZADÁNÍ
+function colorOwner(color) {
+    switch (color) {
+        case "green":
+            return 1;
+        case "black":
+            return 2;
+        default:
+            return 0;
+    }
+}
+
 function loadLevel(levelNumber) {
     clearAllLinks();
     activeSoldiers = [];
@@ -96,8 +134,17 @@ function loadLevel(levelNumber) {
     if (!level) return;
 
     level.cells.forEach(c => {
-        const owner = c.color === "white" ? 1 : c.color === "black" ? 2 : 0;
-        const cell = new Cell(c.x, c.y, 45, c.color, owner);
+        // UPRAVENO PODLE ZADÁNÍ
+        const normalized = normalizeColor(c.color);
+        const owner = colorOwner(normalized);
+
+        const cell = new Cell(
+            c.x,
+            c.y,
+            45,
+            normalized,
+            owner
+        );
         cell.soldiers = c.lives;
         cell.maxSoldiers = c.lives;
         cells.push(cell);
@@ -120,6 +167,35 @@ function showWinNotification() {
     gamePaused = true;
 }
 
+function getCsrfToken() {
+    const name = "csrftoken";
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + "=")) return cookie.substring(name.length + 1);
+    }
+    return "";
+}
+
+async function submitResult(result) {
+    try {
+        await fetch("/result/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCsrfToken()
+            },
+            body: JSON.stringify({
+                level_id: window.LEVEL_ID || 0,
+                result,
+                score: window.score || 0
+            })
+        });
+    } catch (e) {
+        // ignore submit errors
+    }
+}
+
 function onLevelWin() {
     if (levelWon) return;
     levelWon = true;
@@ -128,6 +204,7 @@ function onLevelWin() {
     gamePaused = true;
     gameWon = true;
     saveWin(currentLevel);
+    submitResult("win");
     showWinNotification();
 }
 
@@ -138,6 +215,7 @@ function loseGame() {
     gameOver = true;
     gameResult = "lose";
     gamePaused = true;
+    submitResult("lose");
     showEndOverlay("YOU LOSE", "The enemy took over everything.");
 }
 
@@ -207,7 +285,18 @@ class Cell {
         } else {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.color === "white" ? "#2ecc71" : this.color === "black" ? "#9b59b6" : "#3498db";
+            
+            // UPRAVENO PODLE ZADÁNÍ
+            if (this.owner === 1) {
+                ctx.fillStyle = "#2ecc71";
+            }
+            else if (this.owner === 2) {
+                ctx.fillStyle = "#000000";
+            }
+            else {
+                ctx.fillStyle = "#3498db";
+            }
+            
             ctx.fill();
         }
 
@@ -367,7 +456,7 @@ function updateSoldiers() {
                 s.target.soldiers--;
                 if (s.target.soldiers <= 0) {
                     s.target.owner = s.owner;
-                    s.target.color = s.owner === 1 ? "white" : s.owner === 2 ? "black" : "blue";
+                    s.target.color = s.owner === 1 ? "green" : s.owner === 2 ? "black" : "blue";
                     s.target.soldiers = 5;
                     s.target.underAttack = false;
                     activeLinks = activeLinks.filter(link => {
@@ -419,12 +508,15 @@ setInterval(() => {
     }
 }, 800);
 
+// UPRAVENÁ FUNKCE PODLE ZADÁNÍ (DOKONČENÁ)
 function checkGameEnd() {
     if (gameOver) return;
-    const hasWhite = cells.some(c => c.owner === 1);
-    const hasBlack = cells.some(c => c.owner === 2);
-    if (!hasWhite) loseGame();
-    if (!hasBlack && cells.every(c => c.owner === 1)) winGame();
+
+    const playerCells = cells.filter(c => c.owner === 1);
+    const enemyCells = cells.filter(c => c.owner === 2);
+
+    if (playerCells.length === 0) loseGame();
+    if (enemyCells.length === 0 && cells.every(c => c.owner === 1)) winGame();
 }
 
 function showEndOverlay(title, text) {
@@ -463,13 +555,15 @@ function draw() {
     }
 
     // Linky
-    for (let link of activeLinks) {
-        ctx.beginPath();
-        ctx.moveTo(link.from.x, link.from.y);
-        ctx.lineTo(link.to.x, link.to.y);
-        ctx.strokeStyle = "rgba(255,255,255,0.6)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+    if (typeof activeLinks !== 'undefined') {
+        for (let link of activeLinks) {
+            ctx.beginPath();
+            ctx.moveTo(link.from.x, link.from.y);
+            ctx.lineTo(link.to.x, link.to.y);
+            ctx.strokeStyle = "rgba(255,255,255,0.6)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
     }
 
     // Preview linka
@@ -504,6 +598,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
+// PŘIDÁNO NA KONEC SOUBORU PODLE ZADÁNÍ
 Promise.all([
     nactiObrazek(imgPlayer),
     nactiObrazek(imgEnemy),
