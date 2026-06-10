@@ -1,20 +1,18 @@
-from django.core.validators import validate_email
+from django.core.validators import validate_email 
 from django.core.exceptions import ValidationError
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_GET, require_POST
 from django.utils import timezone
 from asgiref.sync import sync_to_async
-from django.core.exceptions import BadRequest
 from django.db import IntegrityError, transaction
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth import login, logout
+from django.contrib.auth import login as django_login, logout
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
-from django.conf import settings
 from main import models
 import json
 
-for funcname in "login", "logout", "render":
+for funcname in "django_login", "logout", "render":
     globals()[funcname] = sync_to_async(globals()[funcname])
 
 content_type = "text/html; charset=utf-8"
@@ -23,7 +21,7 @@ def get_whole_name(user):
     if not user.is_authenticated:
         return None
     names = [name for name in (user.first_name, user.last_name) if name != ""]
-    return " ".join(names) if names else None
+    return " ".join(names) if names else user.username
 
 success = HttpResponse("success", content_type=content_type)
 fail = HttpResponse("fail", content_type=content_type)
@@ -33,7 +31,8 @@ st405 = HttpResponse(status=405)
 
 @require_GET
 async def homepage(request):
-    name = get_whole_name(await request.auser())
+    user = await request.auser()
+    name = get_whole_name(user)
     
     presets = []
     levels = []
@@ -54,7 +53,7 @@ async def game_page(request):
     try:
         level = await models.LevelOrPreset.objects.aget(id=int(level_id), level_or_preset=True)
     except (models.LevelOrPreset.DoesNotExist, ValueError):
-        return fail
+        return await homepage(request)
     
     user = await request.auser()
     name = get_whole_name(user)
@@ -88,37 +87,36 @@ async def username_exists(request, username):
         return no
     return yes
 
+@require_POST
 @csrf_protect
 async def login_view(request):
-    if request.method == "GET":
-        data = {"whole_user_name": get_whole_name(await request.auser())}
-        return await render(request, "all.html", data, content_type=content_type)
+    username = request.POST.get("username", "").strip().lower()
+    password = request.POST.get("password", "")
 
-    if request.method == "POST":
-        try:
-            login_str, passwd = list(request.POST.items())
-        except Exception:
-            st405
+    if not username or not password:
+        return JsonResponse({"status": "fail", "error": "Vyplň jméno a heslo"})
 
-        try:
-            if "@" in login_str:
-                user = await models.Player.objects.aget(email=login_str)
-            else:
-                user = await models.Player.objects.aget(username=login_str)
-        except models.Player.DoesNotExist:
-            return fail
+    try:
+        user = await models.Player.objects.aget(username=username)
+    except models.Player.DoesNotExist:
+        return JsonResponse({"status": "fail", "error": "Špatné přihlašovací údaje"})
 
-        if user.check_password(passwd):
-            await login(request, user)
-            return success
+    if not user.check_password(password):
+        return JsonResponse({"status": "fail", "error": "Špatné přihlašovací údaje"})
 
-        return fail
+    await django_login(request, user)
     
-    return st405
+    progress = user.progress if isinstance(user.progress, dict) else {}
+    
+    return JsonResponse({
+        "status": "success",
+        "username": user.username,
+        "progress": progress
+    })
 
 @require_POST
 async def logout_view(request, uid):    
-    logout(request)
+    await logout(request)
     return success
 
 @require_GET
@@ -157,7 +155,6 @@ async def change_user_info(request, uid):
     
     return success
 
-
 @csrf_protect
 async def register_view(request):
     if request.method == "GET":
@@ -167,46 +164,42 @@ async def register_view(request):
         return st405
 
     username = request.POST.get("username", "").strip().lower()
-    email = request.POST.get("email", "").strip().lower()
     password = request.POST.get("password", "")
 
-    # --- validation ---
-    if len(username) > 30 or len(email) > 40 or not username or not email or not password:
+    if not username or not password or len(username) > 30:
         return fail
 
-    try:
-        validate_email(email)
-    except ValidationError:
-        return fail
+    base_email = f"{username}@game.local"
+    email = base_email
+    i = 1
+    while await models.Player.objects.filter(email=email).aexists():
+        email = f"{username}{i}@game.local"
+        i += 1
 
-    # --- user creation ---
     try:
         @sync_to_async
         def create_user():
             with transaction.atomic():
                 player = models.Player(username=username, email=email)
-                validate_password(password, user=player)
                 player.set_password(password)
                 player.save()
                 return player
 
         player = await create_user()
 
-    except (ValidationError, IntegrityError):
+    except Exception:
         return fail
 
-    if not (await request.auser()).is_authenticated:
-        await login(request, player)
-
+    await django_login(request, player)
     return success
 
 @require_GET
 async def load_progress(request):
     user = await request.auser()
     if not user.is_authenticated:
-        return JsonResponse({"progress": {}}, status=401)
+        return JsonResponse({"progress": {}})
 
-    progress = getattr(user, "progress", {}) or {}
+    progress = user.progress if isinstance(user.progress, dict) else {}
     return JsonResponse({"progress": progress})
 
 @require_POST
@@ -214,7 +207,7 @@ async def load_progress(request):
 async def save_progress(request):
     user = await request.auser()
     if not user.is_authenticated:
-        return fail
+        return JsonResponse({"status": "fail"})
 
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
@@ -222,7 +215,7 @@ async def save_progress(request):
         if not isinstance(progress, dict):
             raise ValueError
     except Exception:
-        return fail
+        return JsonResponse({"status": "fail"})
 
     @sync_to_async
     def store_progress():
@@ -230,7 +223,7 @@ async def save_progress(request):
         user.save(update_fields=["progress"])
 
     await store_progress()
-    return success
+    return JsonResponse({"status": "success"})
 
 @require_POST
 @csrf_protect
@@ -267,16 +260,13 @@ async def game(request, uid, level_id, game_id):
         return st405
 
     user = await request.auser()
-
     if not user.is_authenticated:
         return fail
 
     try:
         level = await models.LevelOrPreset.objects.aget(id=level_id, level_or_preset=True)
         playthrough = await models.Playthrough.objects.aget(id=game_id, level=level)
-    except models.LevelOrPreset.DoesNotExist:
-        return fail
-    except models.Playthrough.DoesNotExist:
+    except (models.LevelOrPreset.DoesNotExist, models.Playthrough.DoesNotExist):
         return fail
 
     data = {
@@ -292,7 +282,6 @@ async def game(request, uid, level_id, game_id):
 @csrf_protect
 async def multi_player_game_config(request, uid, preset_id):
     user = await request.auser()
-
     if not user.is_authenticated:
         return fail
 
@@ -309,7 +298,6 @@ async def multi_player_game_config(request, uid, preset_id):
                 level=preset,
                 game_state=preset.data
             )
-
             models.Player_Playthrough.objects.create(
                 player=user,
                 playthrough=play,
@@ -317,18 +305,15 @@ async def multi_player_game_config(request, uid, preset_id):
                 real_time_in_game=0,
                 registered_actions_count=0
             )
-
             return play.id
 
     play_id = await create_playthrough()
-
     return HttpResponse(str(play_id), content_type="text/plain")
 
 @require_GET
 @csrf_protect
 async def multi_player_game(request, uid, preset_id, game_id):
     user = await request.auser()
-
     if not user.is_authenticated:
         return fail
 
@@ -337,17 +322,12 @@ async def multi_player_game(request, uid, preset_id, game_id):
     except models.Playthrough.DoesNotExist:
         return fail
 
-    # ověř že user patří do hry
     try:
-        await models.Player_Playthrough.objects.aget(
-            player=user,
-            playthrough=play
-        )
+        await models.Player_Playthrough.objects.aget(player=user, playthrough=play)
     except models.Player_Playthrough.DoesNotExist:
         return fail
 
     players = []
-
     async for p in models.Player.objects.filter(playthroughs=play).values("id", "username"):
         players.append(p)
 
@@ -356,11 +336,8 @@ async def multi_player_game(request, uid, preset_id, game_id):
         "preset_id": preset_id,
         "players": players,
         "whole_user_name": get_whole_name(user),
-    }
-    # Připrav data pro herní šablonu a vraťme přímo game.html (multiplayer režim)
-    data.update({
         "level_id": preset_id,
         "level_name": f"Zápas {play.id}",
         "level_data": play.game_state,
-    })
+    }
     return await render(request, "game.html", data, content_type=content_type)
