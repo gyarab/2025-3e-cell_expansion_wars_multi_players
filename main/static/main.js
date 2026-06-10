@@ -1,6 +1,29 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+const imgPlayer = new Image();
+imgPlayer.src = (window.ASSET_URLS && window.ASSET_URLS.player) ? window.ASSET_URLS.player : "/static/cell_player.png";
+
+const imgEnemy = new Image();
+imgEnemy.src = (window.ASSET_URLS && window.ASSET_URLS.enemy) ? window.ASSET_URLS.enemy : "/static/cell_enemy.png";
+
+const imgNeutral = new Image();
+imgNeutral.src = (window.ASSET_URLS && window.ASSET_URLS.neutral) ? window.ASSET_URLS.neutral : "/static/cell_neutral.png";
+
+const imgEnemySoldier = new Image();
+imgEnemySoldier.src = (window.ASSET_URLS && window.ASSET_URLS.enemySoldier) ? window.ASSET_URLS.enemySoldier : "/static/cell_enemy_soldier.png";
+
+const imgBackgroundTop = new Image();
+imgBackgroundTop.src = (window.ASSET_URLS && window.ASSET_URLS.backgroundTop) ? window.ASSET_URLS.backgroundTop : "/static/cellwars_background_top.png";
+
+function nactiObrazek(img) {
+    return new Promise(function(resolve) {
+        if (img.complete && img.naturalWidth !== 0) { resolve(); return; }
+        img.addEventListener('load', resolve);
+        img.addEventListener('error', resolve);
+    });
+}
+
 let selectedCell = null;
 let lastMouse = { x: 0, y: 0 };
 let activeSoldiers = [];
@@ -53,9 +76,7 @@ let cells = [];
 let flakes = [];
 
 function clearAllLinks() {
-    for (let link of activeLinks) {
-        clearInterval(link.interval);
-    }
+    for (let link of activeLinks) clearInterval(link.interval);
     activeLinks = [];
 }
 
@@ -67,7 +88,6 @@ function loadLevel(levelNumber) {
     cells = [];
     currentLevel = levelNumber;
 
-    // Pokud jsou data z Djanga, použij je
     if (typeof LEVEL_DATA !== 'undefined' && LEVEL_DATA && typeof LEVEL_ID !== 'undefined') {
         levels[LEVEL_ID] = LEVEL_DATA;
     }
@@ -175,14 +195,38 @@ class Cell {
     }
 
     draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.fillStyle = this.color === "white" ? "black" : "white";
-        ctx.font = "16px Arial";
+        let img = null;
+        if (this.owner === 1) img = imgPlayer;
+        else if (this.owner === 2) img = imgEnemy;
+        else img = imgNeutral;
+
+        ctx.save();
+        if (img && img.complete && img.naturalWidth !== 0) {
+            ctx.globalCompositeOperation = "screen";
+            ctx.drawImage(img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+        } else {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color === "white" ? "#2ecc71" : this.color === "black" ? "#9b59b6" : "#3498db";
+            ctx.fill();
+        }
+
+        if (this === selectedCell) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius + 10, 0, Math.PI * 2);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "rgba(0, 255, 136, 0.7)";
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 16px Arial";
         ctx.textAlign = "center";
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 4;
         ctx.fillText(this.soldiers, this.x, this.y + 5);
+        ctx.shadowBlur = 0;
     }
 }
 
@@ -228,13 +272,7 @@ function isPointNearLine(x, y, a, b, threshold = 6) {
 function sendSoldiers(from, to) {
     if (from.soldiers <= 0) return;
     from.soldiers -= 1;
-    activeSoldiers.push({
-        x: from.x,
-        y: from.y,
-        target: to,
-        owner: from.owner,
-        from: from
-    });
+    activeSoldiers.push({ x: from.x, y: from.y, target: to, owner: from.owner, from: from });
 }
 
 function startAutoSend(from, to) {
@@ -243,13 +281,6 @@ function startAutoSend(from, to) {
         if (!gamePaused && !gameOver) sendSoldiers(from, to);
     }, 500);
     activeLinks.push({ from, to, interval });
-}
-
-function stopAutoSendToTarget(target) {
-    activeLinks = activeLinks.filter(link => {
-        if (link.to === target) { clearInterval(link.interval); return false; }
-        return true;
-    });
 }
 
 // Načtení levelu
@@ -265,69 +296,135 @@ try {
     }
 } catch (e) {
     loadLevel(1);
-}// Události myši
+}
+
+// Události myši
 canvas.addEventListener("mousemove", (e) => {
     const coords = getScaledCoords(e);
     lastMouse.x = coords.x;
     lastMouse.y = coords.y;
-
     if (selectedCell) {
         const snapped = findClosestCell(lastMouse.x, lastMouse.y, true);
-        if (snapped && snapped !== selectedCell) snapTarget = snapped;
-        else snapTarget = null;
+        snapTarget = (snapped && snapped !== selectedCell) ? snapped : null;
     }
 }, { passive: true });
 
 canvas.addEventListener('pointerdown', (e) => {
     const { x, y } = getScaledCoords(e);
 
-    // 1. Kliknutí přímo na existující linku = okamžité smazání (odpojení)
+    // Klik na linku = smaž ji
     const clickedLink = activeLinks.find(link => isPointNearLine(x, y, link.from, link.to, 8));
     if (clickedLink) {
         clearInterval(clickedLink.interval);
         activeLinks = activeLinks.filter(l => l !== clickedLink);
-        return; // Smazali jsme linku, dál nepokračujeme
+        return;
     }
 
-    // 2. Začátek tažení z vlastní buňky (hráč 1)
+    // Vyber buňku hráče
     const c = findClosestCell(x, y, true);
     if (c && c.owner === 1) {
-        selectedCell = c;
+        selectedCell = (selectedCell === c) ? null : c;
+        snapTarget = null;
+    } else {
+        selectedCell = null;
+        snapTarget = null;
     }
 }, { passive: true });
 
-// Událost pro puštění tlačítka myši (finální připojení linky)
 canvas.addEventListener('pointerup', (e) => {
     if (!selectedCell) return;
-
     const { x, y } = getScaledCoords(e);
     const target = findClosestCell(x, y, true);
 
-    // Pokud myš pustíme nad nějakou cílovou buňkou
     if (target && target !== selectedCell) {
         const existing = activeLinks.find(l => l.from === selectedCell && l.to === target);
-        
         if (existing) {
-            // Zrušení linky, pokud na cíl potáhneme znovu
             clearInterval(existing.interval);
             activeLinks = activeLinks.filter(l => !(l.from === selectedCell && l.to === target));
         } else {
-            // Linka se plně připojí a spustí se vysílání vojáků!
             startAutoSend(selectedCell, target);
         }
+        selectedCell = null;
+        snapTarget = null;
     }
-
-    // Resetování "preview" stavu po puštění myši
-    selectedCell = null;
-    snapTarget = null;
 }, { passive: true });
+
+// Pohyb vojáků
+function updateSoldiers() {
+    for (let i = activeSoldiers.length - 1; i >= 0; i--) {
+        const s = activeSoldiers[i];
+        const dx = s.target.x - s.x;
+        const dy = s.target.y - s.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < 5) {
+            if (s.owner === s.target.owner) {
+                s.target.soldiers++;
+                if (s.target.soldiers > s.target.maxSoldiers)
+                    s.target.soldiers = s.target.maxSoldiers;
+            } else {
+                s.target.underAttack = true;
+                s.target.soldiers--;
+                if (s.target.soldiers <= 0) {
+                    s.target.owner = s.owner;
+                    s.target.color = s.owner === 1 ? "white" : s.owner === 2 ? "black" : "blue";
+                    s.target.soldiers = 5;
+                    s.target.underAttack = false;
+                    activeLinks = activeLinks.filter(link => {
+                        if (link.from === s.target || link.to === s.target) {
+                            clearInterval(link.interval);
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+            }
+            activeSoldiers.splice(i, 1);
+            continue;
+        }
+
+        s.x += dx / dist * 4;
+        s.y += dy / dist * 4;
+
+        // Vykreslení vojáka
+        if (s.owner === 2 && imgEnemySoldier.complete && imgEnemySoldier.naturalWidth !== 0) {
+            ctx.drawImage(imgEnemySoldier, s.x - 12, s.y - 12, 24, 24);
+        } else {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = s.owner === 1 ? "#00ff88" : "orange";
+            ctx.fill();
+        }
+    }
+}
+
+// Regenerace vojáků
+setInterval(() => {
+    if (gamePaused || gameOver) return;
+    for (let c of cells) {
+        if (!c.underAttack && c.soldiers < c.maxSoldiers) c.soldiers += 1;
+        c.underAttack = false;
+    }
+}, 800);
+
+// AI počítače
+setInterval(() => {
+    if (gamePaused || gameOver) return;
+    const enemies = cells.filter(c => c.owner === 2 && c.soldiers > 5);
+    const targets = cells.filter(c => c.owner !== 2);
+    if (targets.length === 0 || enemies.length === 0) return;
+    for (let enemy of enemies) {
+        const target = targets[Math.floor(Math.random() * targets.length)];
+        sendSoldiers(enemy, target);
+    }
+}, 800);
 
 function checkGameEnd() {
     if (gameOver) return;
-    const hasWhite = cells.some(c => c.color === "white");
-    const hasBlack = cells.some(c => c.color === "black");
+    const hasWhite = cells.some(c => c.owner === 1);
+    const hasBlack = cells.some(c => c.owner === 2);
     if (!hasWhite) loseGame();
-    if (!hasBlack && cells.every(c => c.color === "white")) winGame();
+    if (!hasBlack && cells.every(c => c.owner === 1)) winGame();
 }
 
 function showEndOverlay(title, text) {
@@ -357,24 +454,31 @@ function closeRules() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#0a0a2a";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Pozadí
+    if (imgBackgroundTop.complete && imgBackgroundTop.naturalWidth !== 0) {
+        ctx.drawImage(imgBackgroundTop, 0, 0, canvas.width, canvas.height);
+    } else {
+        ctx.fillStyle = "#0a0a2a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
+    // Linky
     for (let link of activeLinks) {
         ctx.beginPath();
         ctx.moveTo(link.from.x, link.from.y);
         ctx.lineTo(link.to.x, link.to.y);
-        ctx.strokeStyle = "white";
+        ctx.strokeStyle = "rgba(255,255,255,0.6)";
         ctx.lineWidth = 2;
         ctx.stroke();
     }
 
+    // Preview linka
     if (selectedCell) {
         ctx.beginPath();
         ctx.moveTo(selectedCell.x, selectedCell.y);
         if (snapTarget) ctx.lineTo(snapTarget.x, snapTarget.y);
         else ctx.lineTo(lastMouse.x, lastMouse.y);
-        ctx.strokeStyle = "gray";
+        ctx.strokeStyle = "rgba(255,255,255,0.3)";
         ctx.lineWidth = 2;
         ctx.stroke();
     }
@@ -400,4 +504,10 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-draw();
+Promise.all([
+    nactiObrazek(imgPlayer),
+    nactiObrazek(imgEnemy),
+    nactiObrazek(imgNeutral),
+    nactiObrazek(imgEnemySoldier),
+    nactiObrazek(imgBackgroundTop)
+]).then(() => draw());
