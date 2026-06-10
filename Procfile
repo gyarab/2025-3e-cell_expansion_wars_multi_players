@@ -1,0 +1,1 @@
+Set-Content C:\Users\simon\AsiFrontend\2025-3e-cell_expansion_wars_multi_players-kod\Procfile "web: cd prj && python manage.py collectstatic --noinput && python manage.py migrate && gunicorn prj.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:`$PORT"
